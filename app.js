@@ -1,19 +1,48 @@
 const express = require('express');
 const app = express();
 
+const {
+    protocol,
+    host,
+    port,
+    username,
+    password
+} = require('./mqtt_conf')
+
 const mqtt = require('mqtt')
 var client; 
-try {
-    client = mqtt.connect('mqtt://test.mosquitto.org')
-    console.log('initiating client.on("connect") function...')
-    client.on('connect', function() {
-        console.log(`Client connected`)
+
+const connectToMqttBroker = () => {
+
+    const connectUrl = `${protocol}://${host}:${port}`
+    const clientId = `mqttjs_${Math.random().toString(8).slice(2, 4)}`
+    console.log(connectUrl)
+    try {
+        client = mqtt.connect(
+            connectUrl, {
+                clientId: clientId,
+                username: username,
+                password: password,  
+                connectTimeout: 10000,  
+            }
+        )
+    } catch (err) {
+        console.log(err)
+    }
+    client.on('connect', (err) => {
+        console.log('initiating client.on("connect") function...')
+        if (!err) {
+            console.log(`Client not connected`)
+        } else {
+            console.log(`Client connected`)
+            console.log(err)
+        }
     })
-} catch(err) {
-    console.log(err)
 }
 
-const _topic = '/nodejs'
+connectToMqttBroker()
+
+const _topic = '/'
 
 app.use(express.urlencoded({ extended: false }))
 app.use(express.json())
@@ -24,7 +53,6 @@ app.get('/', (req, res) => {
     res.end()
 })
 
-
 app.post('/api/subscribe/esp/:topic_part1/:topic_part2', (req, res) => {
     
     const topic = `${req.params.topic_part1}/${req.params.topic_part2}` // accessing the :topic element
@@ -34,33 +62,20 @@ app.post('/api/subscribe/esp/:topic_part1/:topic_part2', (req, res) => {
     if(!msg) {
         return res.status(400).json({success: false, msg: 'please provide msg value'})
     }
-    
 
-
-    console.log(req.body)
-    client.subscribe(topic, (err) => {
-        if(!err) {
+    console.log(req.body) 
             
-            console.log('publishing msg...')
-            client.publish(topic, msg, { retain: true }, (err) => {
-                if (err) {
-                    console.error('Failed to publish message: ', err)
-                    
-                } else {
-                    console.log('Message published with retain flag set to true')
-                    res.status(201).json({ success: true, msg: `msg: ${msg} | published in topic: ${topic}` })
-                    console.log('msg published!')
-                }
-            })
+    console.log('publishing msg...')
+    client.publish(topic, msg, { retain: true }, (err) => {
+        if (err) {
+            console.error('Failed to publish message: ', err)
         } else {
-            console.error('Failed to subscribe to topic: ', err)
+            console.log('Message published with retain flag set to true')
+            res.status(201).json({ success: true, msg: `msg: ${msg} | published in topic: ${topic}` })
+            console.log('msg published!')
         }
     })
-    
-    
-    
-    
-})
+})  
 
 app.get('/api/subscribe/esp/:topic', (req, res) => {
     const topic = `/${req.params.topic}` // accessing the :topic element
@@ -76,13 +91,6 @@ app.get('/api/subscribe/esp/:topic', (req, res) => {
     
 })
 
-/*
-app.get('*', (req, res) => {
-    console.log('User hit 404 resource')
-    res.status(404).send("404 Page Not Found")
-    res.end()
-})
-*/
 app.listen(5000, () => {
     console.log('Server is listening on port 5000')
     
