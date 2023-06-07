@@ -6,7 +6,7 @@ const subscribeToTopic = (req, res) => {
     const { topics } = req.body;
     
     for (i in topics) {
-        const worker = new Worker('./Config/worker.js', { workerData: topics[i]});
+        const worker = new Worker('./Workers/worker.js', { workerData: topics[i]});
         worker.on('message', (data) => {
             res.status(200)
             console.log(data);
@@ -16,20 +16,6 @@ const subscribeToTopic = (req, res) => {
             console.log(`An error has occured: ${err}`)
         })
     }
-    
-    /*
-    const {topic} = req.body;
-    if (!topic) {
-        return res.status(400).json({ success: false, msg: 'please provide topic value' })
-    }
-    client.subscribe(topic, () => {
-        console.log('subscribed to topic: ', topic);
-        res.status(200).json({ success: true, msg: `subscribed successfully to topic: ${topic}`})
-        client.on('message', (topic, message) => {
-            console.log(message.toString())
-        })
-    })
-    */
 }
 
 const publishToTopic = (req, res) => {
