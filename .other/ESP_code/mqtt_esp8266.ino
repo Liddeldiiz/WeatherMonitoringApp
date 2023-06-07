@@ -1,27 +1,14 @@
-/*
- Basic ESP8266 MQTT example
- This sketch demonstrates the capabilities of the pubsub library in combination
- with the ESP8266 board/library.
- It connects to an MQTT server then:
-  - publishes "hello world" to the topic "outTopic" every two seconds
-  - subscribes to the topic "inTopic", printing out any messages
-    it receives. NB - it assumes the received payloads are strings not binary
-  - If the first character of the topic "inTopic" is an 1, switch ON the ESP Led,
-    else switch it off
- It will reconnect to the server if the connection is lost using a blocking
- reconnect function. See the 'mqtt_reconnect_nonblocking' example for how to
- achieve the same result without blocking the main loop.
- To install the ESP8266 board, (using Arduino 1.6.4+):
-  - Add the following 3rd party board manager under "File -> Preferences -> Additional Boards Manager URLs":
-       http://arduino.esp8266.com/stable/package_esp8266com_index.json
-  - Open the "Tools -> Board -> Board Manager" and click install for the ESP8266"
-  - Select your ESP8266 in "Tools -> Board"
-*/
-
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
+#include <DHT.h>
 
+#define DHTPIN 5
+#define DHTTYPE DHT11
 // Update these with values suitable for your network.
+
+const int dht_pin = D1;
+
+DHT dht(dht_pin, DHTTYPE);
 
 const char* ssid = "example";
 const char* password = "example";
@@ -85,13 +72,32 @@ void reconnect() {
     // Create a random client ID
     String clientId = "ESP8266Client-";
     clientId += String(random(0xffff), HEX);
-    const char* user = "esp_user";
-    const char* password = "pass1234";
+    //Serial.println(clientId);
+    const char* user = "example";
+    const char* password = "example";
     // Attempt to connect
     if (client.connect(clientId.c_str(), user, password)) {
       Serial.println("connected");
       // Once connected, publish an announcement...
-      client.publish("device/temp", "MQTT Server is connected");
+      
+      // prepare initial data to be sent from this device
+      // generated client id
+      char payload_device_id[20];
+      clientId.toCharArray(payload_device_id, 20);
+      Serial.println(payload_device_id);
+      //String message = "Device: " + clientId + " has connected to the MQTT Broker";
+
+      // ip address
+      char payload_device_ip[14];
+      String localIP;
+      //WiFi.localIP().toString(localIP).toCharArray(payload_device_id, 14);
+      //Serial.println(payload_device_ip);
+      localIP = WiFi.localIP().toString();
+      localIP.toCharArray(payload_device_ip, 14);
+
+      client.publish("device/client_id", payload_device_id); //ESP8266Client-943
+      client.publish("device/client_ip", payload_device_ip);
+      
       // ... and resubscribe
       client.subscribe("device/led");
     } else {
@@ -107,6 +113,7 @@ void reconnect() {
 void setup() {
   pinMode(BUILTIN_LED, OUTPUT);     // Initialize the BUILTIN_LED pin as an output
   Serial.begin(115200);
+  dht.begin();
   setup_wifi();
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
@@ -118,14 +125,32 @@ void loop() {
     reconnect();
   }
   client.loop();
+  
 
   unsigned long now = millis();
-  if (now - lastMsg > 2000) {
+  if (now - lastMsg > 5000) {
     lastMsg = now;
-    value = analogRead(A0) * 0.32;
-    snprintf (msg, MSG_BUFFER_SIZE, "hello world #%ld", value);
-    Serial.print("Publish message: ");
-    Serial.println(msg);
-    client.publish("device/temp", msg);
+    float hum = dht.readHumidity();
+    float temp = dht.readTemperature();
+    
+    char payload_hum[5];
+    char payload_temp[5];
+    
+    //value = analogRead(A0) * 0.32;
+    //snprintf (msg, MSG_BUFFER_SIZE, "hello world #%ld", value);
+    
+    /*
+    dtostrf(hum, 4, 2, payload_hum);
+    Serial.print("Published humidity: ");
+    Serial.println(payload_hum);
+    client.publish("device/hum", payload_hum);
+
+    dtostrf(temp, 4, 2, payload_temp);
+    Serial.print("Published temperature: ");
+    Serial.println(payload_temp);
+    client.publish("device/temp", payload_temp);
+    */
+
+    
   }
 }
