@@ -2,17 +2,20 @@ const client = require('../Config/mqtt_config');
 const { Worker } = require('worker_threads');
 
 const subscribeToTopic = (req, res) => {
-    const { topic } = req.body;
-    console.log(topic);
-    const worker = new Worker('./Config/worker.js');
-    worker.on('message', (data) => {
-        res.status(200)
-        console.log(data);
-    });
-    worker.on('error', (err) => {
-        res.status(500)
-        console.log(`An error has occured: ${err}`)
-    })
+    console.log('postman hit resource: ', req.url)
+    const { topics } = req.body;
+    
+    for (i in topics) {
+        const worker = new Worker('./Config/worker.js', { workerData: topics[i]});
+        worker.on('message', (data) => {
+            res.status(200)
+            console.log(data);
+        });
+        worker.on('error', (err) => {
+            res.status(500)
+            console.log(`An error has occured: ${err}`)
+        })
+    }
     
     /*
     const {topic} = req.body;

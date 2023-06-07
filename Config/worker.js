@@ -1,19 +1,21 @@
-const { parentPort } = require('worker_threads');
+const { parentPort, workerData } = require('worker_threads');
 const client = require('../Config/mqtt_config');
 const {
     subscribeToTopic,
     onMessage
 } = require('../Controllers/mqtt_controller');
 
-const topic = 'device/temp';
+//const topic = 'device/temp';
 var msg;
 var response = {}
 
-client.subscribe(topic, () => {
-    console.log('subscribed to topic: ', topic);
+//console.log(`Inside worker node: topic: ${workerData}`);
+
+client.subscribe(workerData, () => {
+    console.log('subscribed to topic: ', workerData);
     client.on('message', (topic, message) => {
         msg = message.toString();
-        response = { topic: topic, message: msg }
+        response = { topic: workerData, message: msg }
         parentPort.postMessage(response);
         //console.log(msg)
     })
