@@ -3,19 +3,23 @@ const { Worker } = require('worker_threads');
 
 const subscribeToTopic = (req, res) => {
     console.log('postman hit resource: ', req.url)
-    const { topics } = req.body;
+
+    const { subscribe } = req.body.data;
+    const { topics } = req.body.data;
+    //console.log(subscribe);
+    //console.log(topics);
+    
     
     for (i in topics) {
         const worker = new Worker('./Workers/worker.js', { workerData: topics[i]});
-        worker.on('message', (data) => {
-            res.status(200)
-            console.log(data);
-        });
+        console.log(worker.threadId);
+        worker.on('message', incoming => console.log(incoming));
         worker.on('error', (err) => {
             res.status(500)
             console.log(`An error has occured: ${err}`)
         })
     }
+    
 }
 
 const publishToTopic = (req, res) => {

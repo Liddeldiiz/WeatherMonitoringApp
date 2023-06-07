@@ -11,6 +11,17 @@ var response = {}
 
 //console.log(`Inside worker node: topic: ${workerData}`);
 
+parentPort.on("message", message => {
+    if(message === 'exit') {
+        parentPort.postMessage("parentport closing");
+        parentPort.close();
+    } else {
+        parentPort.postMessage({ going: message });
+    }
+});
+
+/*
+
 client.subscribe(workerData, () => {
     console.log('subscribed to topic: ', workerData);
     client.on('message', (topic, message) => {
@@ -22,3 +33,4 @@ client.subscribe(workerData, () => {
 })
 
 
+*/
