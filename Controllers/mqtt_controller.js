@@ -1,8 +1,15 @@
-const client = require('../Config/mqtt_config');
+//const mqtt_client = require('../Config/mqtt_config');
+const mysql_client = require('../Config/mysql_config');
 const { Worker } = require('worker_threads');
 
+
+///////////// SUBSCRIBING TO TOPIC /////////////
 const subscribeToTopic = (req, res) => {
     console.log('postman hit resource: ', req.url)
+    /*    mysql_client.query('Select * from devices_test', (err, result) => {
+        if (err) throw err;
+        console.log('Result:\n', result);
+    })*/
 
     const { subscribe } = req.body.data;
     const { topics } = req.body.data;
@@ -11,9 +18,14 @@ const subscribeToTopic = (req, res) => {
     
     
     for (i in topics) {
-        const worker = new Worker('./Workers/worker.js', { workerData: topics[i]});
-        console.log(worker.threadId);
-        worker.on('message', incoming => console.log(incoming));
+        const worker = new Worker('./Workers/worker.js', { workerData: topics[i] });
+        //console.log(worker);
+        //worker.on('message', incoming => console.log(incoming));
+        worker.on('message', (data) => {
+            console.log(`data from worker: ${worker.threadId}`)
+            console.log(data);
+        })
+
         worker.on('error', (err) => {
             res.status(500)
             console.log(`An error has occured: ${err}`)
