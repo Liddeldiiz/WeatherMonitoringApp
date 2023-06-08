@@ -110,6 +110,15 @@ void reconnect() {
   }
 }
 
+void setup_device() {
+  Serial.print("client ip to be published: ");
+  Serial.println(payload_device_ip);
+  client.publish("device/client_ip", payload_device_ip);
+  clientID = client.subscribe("device/client_id");
+  Serial.println("clientID: " + clientID);
+  client.unsubscribe("device/client_id");
+}
+
 void setup() {
   pinMode(BUILTIN_LED, OUTPUT);     // Initialize the BUILTIN_LED pin as an output
   Serial.begin(115200);
@@ -117,6 +126,7 @@ void setup() {
   setup_wifi();
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
+  setup_device();
 }
 
 void loop() {
