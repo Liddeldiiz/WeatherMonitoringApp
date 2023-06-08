@@ -11,7 +11,8 @@ const setup_devices = () => {
             device_ip = message.toString()
             console.log(`Value from message: ${device_ip}`);
             //const rows = getDeviceByIP(device_ip)
-            const rows = getDeviceByIP('192.168.1.143')
+            var rows;
+            rows = getDeviceByIP('192.168.1.143');
             console.log(`Result: \n${rows}`);
             //mqtt_client.unsubscribe('device/client_ip');
         })
