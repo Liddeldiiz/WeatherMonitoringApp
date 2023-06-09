@@ -13,6 +13,7 @@
     "dotenv": "^16.1.4",
     "express": "^4.18.2",
     "mqtt": "^4.3.7",
+    "mqtt-async": "^1.0.46",
     "mysql": "^2.18.1"
   },
   "devDependencies": {

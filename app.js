@@ -1,7 +1,7 @@
 const express = require('express');
 const app = express();
 
-const { setup_devices } = require('./Init/setup');
+const { setup_devices } = require('./Init/setup_async');
 
 const router_esp = require('./Routes/esp') ;
 const router_workers = require('./Routes/workers');
