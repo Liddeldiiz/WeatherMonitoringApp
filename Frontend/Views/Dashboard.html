@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <style>
+        #service_div {
+            display: flex;
+            max-width: 40vw;
+            border-style: solid;
+            border-width: 1px;
+            border-color: black;
+            /* justify-content: space-between; */
+        }
+
+        #service_name {
+            align-self: center;
+            padding-left: 5px;
+            padding-right: 5px;
+            width: 16vw;
+            border-style: solid;
+            border-width: 1px;
+            border-color: black;
+            border-left: none;
+            border-top: none;
+            border-bottom: none;
+        }
+
+        #service_status {
+            align-self: center;
+            padding-right: 5px;
+            padding-left: 5px;
+            
+        }
+    </style>
+</head>
+<body>
+    <div id="loader" class="center">
+        <p>loading...</p>
+    </div>
+    <div id="title">
+        <h1>Dashboard</h1>
+    </div>
+    
+    <div id="services_status_display">
+        <div id="service_div" style="border-bottom: none;">
+            <div id="service_name">
+                <h4>Database</h4>
+            </div>
+            <div id="service_status">
+                <p>status: </p>
+            </div>
+        </div>
+        <div id="service_div">
+            <div id="service_name">
+                <h4>MQTT</h4>
+            </div>
+            <div id="service_status">
+                <p>status: </p>
+            </div>
+        </div>
+        
+    </div>
+    
+    <script>
+        document.onreadystatechange = function () {
+            if (document.readyState !== "complete") {
+                document.querySelector("body").style.visibility = "hidden";
+                document.querySelector('#loader').style.visibility = "visible";
+                setTimeout(5000);
+            } else {
+                
+                document.querySelector('#loader').style.display = "none";
+                document.querySelector('body').style.visibility = "visible";
+            }
+        }
+    </script>
+</body>
+</html>

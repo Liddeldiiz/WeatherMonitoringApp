@@ -20,12 +20,17 @@ parentPort.on("message", message => {
 });*/
 
 
+// on topic: {"deviceIP": "192.168.1.142", "msg": {"temp": "xC", "hum": "x%"}}
+
 
 mqtt_client.subscribe(workerData, () => {
     console.log('subscribed to topic: ', workerData);
     mqtt_client.on('message', (topic, message) => {
         msg = message.toString();
-        response = { topic: workerData, message: msg }
+        response = { 
+            topic: workerData,
+            deviceIP: deviceIP,
+            message: msg }
         parentPort.postMessage(response);
         //console.log(msg)
     })
