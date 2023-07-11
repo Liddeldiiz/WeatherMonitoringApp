@@ -59,7 +59,8 @@ const publishToTopic = (mqttClient, topic, message) => {
 }
 
 const onMessage = () => {
-    mqttClient.on('message', function(message) {
+    mqttClient.on('message', function(topic, message) {
+        
         return message.toString();
         //res.status(200).json({ success: true, msg: message.toString() })
     })

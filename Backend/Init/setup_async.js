@@ -1,28 +1,50 @@
-const { connectToMqttBroker } = require('../Config/mqtt_config');
+const { runMQTTConfig } = require('../Config/mqtt_config');
 const {
     subscribeToTopic,
     publishToTopic,
     subscribeToAllTopics
 } = require('../Controllers/mqtt_controller');
 
-const { connectToDB } = require('../Config/mysql_config');
+const { connectToDB, runDBConfig } = require('../Config/mysql_config');
 const { getFunction, getDeviceByIP } = require('../Controllers/mysql_controller');
+
+const data = require('../Controllers/dashboard_controller');
+const { proxy1 } = require('../Controllers/dashboard_controller');
+
 
 //const mysql_client = require('../Config/mysql_config');
 
+/*
+const handleReconnect = async (mySQLClient) => {
+    const reconnectToDBPromise = connectToDB();
+    mySQLClient = await reconnectToDBPromise;
+    if (mySQLClient.state === 'disconnected') {
+        await handleReconnect(mySQLClient);
+    } else {
+        console.log(mySQLClient.state);
+    }
+    
+}*/
+
 const setup = async () => {
     // setup MySQL
-    const connectToDBPromise = connectToDB();
-    const mySQLClient = await connectToDBPromise;
-    
+    const connectToDBPromise = runDBConfig();
+    let mySQLClient = await connectToDBPromise;
+
     //console.log(`db_status: ${db_status}`);
 
     // setup MQTT
-    const mqttClientPromise = connectToMqttBroker();
+    const mqttClientPromise = runMQTTConfig();
     const mqttClient = await mqttClientPromise;
     mqttClient.on('connect', (ack) => {
-        if (!ack) console.log('MQTT Client not connected');
-        else console.log('MQTT Client connected');
+        if (!ack) {
+            console.log('MQTT Client not connected');
+            proxy1.service_status_mqtt = false;
+        }
+        else {
+            console.log('MQTT Client connected');
+            proxy1.service_status_mqtt = true;
+        }
     })
 
     console.log('Starting setup sequence...')

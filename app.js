@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+const path = require('path');
 
 const { setup } = require('./Backend/Init/setup_async');
 const { setup_experiment } = require('./Backend/Init/setup_experiment');
@@ -10,6 +11,11 @@ const router_dom = require('./Backend/Routes/dashboard');
 
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
+app.use(express.static('Public'));
+
+app.set('Views', path.join(__dirname, 'Public/Views'));
+app.set('view engine', 'ejs');
+
 
 app.use(router_esp);
 app.use(router_workers);

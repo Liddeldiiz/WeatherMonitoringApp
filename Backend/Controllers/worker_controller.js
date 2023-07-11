@@ -1,5 +1,12 @@
 const { Worker } = require('worker_threads');
 
+
+const reconnectDBWorker = (mySQLClient) => {
+    
+}
+
+
+/*
 ///////////// SUBSCRIBING TO TOPIC /////////////
 const deployWorkerSubscribe = (req, res, topic) => {
     const { subscribe } = req.body.data;
@@ -21,7 +28,7 @@ const deployWorkerSubscribe = (req, res, topic) => {
 
     }
     
-}
+}*/
 
 module.exports = {
     deployWorkerSubscribe

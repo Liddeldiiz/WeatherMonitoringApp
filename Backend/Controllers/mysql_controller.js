@@ -1,5 +1,6 @@
 //const mysql_client = require('../Config/mysql_config');
 
+
 const getDeviceByIP = (mysql_client, device_ip) => {
     return new Promise((resolve, reject) => {
         var sql = 'select * from devices_test where clientIP = ?;';

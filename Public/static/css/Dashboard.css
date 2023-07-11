@@ -1,0 +1,30 @@
+#service_div {
+    display: flex;
+    max-width: 40vw;
+    border-style: solid;
+    border-width: 1px;
+    border-color: black;
+    /* justify-content: space-between; */
+}
+
+#service_name {
+    align-self: center;
+    padding-left: 5px;
+    padding-right: 5px;
+    width: 16vw;
+    border-style: solid;
+    border-width: 1px;
+    border-color: black;
+    border-left: none;
+    border-top: none;
+    border-bottom: none;
+}
+
+
+
+.service_status {
+    align-self: center;
+    padding-right: 5px;
+    padding-left: 5px;
+    
+}

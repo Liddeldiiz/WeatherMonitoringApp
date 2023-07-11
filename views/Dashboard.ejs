@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link href="../static/css/Dashboard.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+    
+    <div id="title">
+        <h1>Dashboard</h1>
+    </div>
+    
+    <div id="services_status_display">
+        <div id="service_div" style="border-bottom: none;">
+            <div id="service_name">
+                <h4>Database</h4>
+            </div>
+            <div id="service_status_db" class="service_status">
+                <p><%=  %></p>
+            </div>
+        </div>
+        <div id="service_div">
+            <div id="service_name">
+                <h4>MQTT</h4>
+            </div>
+            <div id="service_status_mqtt" class="service_status">
+                <p><%=  %></p>
+            </div>
+        </div>
+        <h2 id="counter"><%= data.counter %></h2>
+        
+    </div>
+    <div id="topics_dislpay">
+        <div id="topic_div">
+            <div id="topic_name">
+                <h4>device/temp</h4>
+            </div>
+            <div id="topic_value">
+                <%= data.temp_value %>
+                <p id="db_entries_counter" class="db_entries_counter"><% %></p>
+            </div>
+        </div>
+        <div id="topic_div">
+            <div id="topic_name">
+                <h4>device/hum</h4>
+            </div>
+            <div id="topic_value">
+                <%= data.hum_value %>
+            </div>
+        </div>
+        <div id="topic_div">
+            <div id="topic_name">
+                <h4>device/client_ip</h4>
+            </div>
+            <div id="topic_value">
+                <%= data.client_ip_value %>
+            </div>
+        </div>
+        <div id="topic_div">
+            <div id="topic_name">
+                <h4>device/client_id</h4>
+            </div>
+            <div id="topic_value">
+                <%= data.client_id_value %>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+    var counter = 0;
+    function fetchDataAndUpdate() {
+        fetch('/api/data_dashboard')
+            .then(response => response.json())
+            .then(updatedData => {
+                if (updatedData.service_status_db) {
+                    document.getElementById('service_status_db').textContent = "Connected";
+                } else {
+                    document.getElementById('service_status_db').textContent = "Connecting...";
+                }
+                
+                if (updatedData.service_status_mqtt) {
+                    document.getElementById('service_status_mqtt').textContent = "Connected";
+                } else {
+                    document.getElementById('service_status_mqtt').textContent = "Connecting...";
+                }
+                
+                //document.getElementById(/*one by one*/);
+            })
+        
+        counter += 1;
+        document.getElementById('counter').textContent = counter;
+    }
+
+    setInterval(fetchDataAndUpdate, 3000);
+
+    fetchDataAndUpdate();
+    </script>
+
+</body>
+</html>
