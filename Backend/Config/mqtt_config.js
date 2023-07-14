@@ -1,16 +1,32 @@
 const mqtt = require('mqtt');
-const { proxy1 } = require('../Controllers/dashboard_controller');
+const { proxy1 } = require('../Data/dashboard');
 const dotenv = require('dotenv');
 dotenv.config()
 
-function delay(ms, callback) {
-    const intervalId = setInterval(() => {
-        clearInterval(intervalId);
-        callback();
-    }, ms)
+const connectToMqttBroker = () => {
+
+    const connectUrl = `${process.env.MQTT_PROTOCOL}://${process.env.MQTT_HOST}:${process.env.MQTT_PORT}`
+    const clientId = `mqttjs_${Math.random().toString(8).slice(2, 4)}`
+    let mqttClient;
+    try {
+        mqttClient = mqtt.connect(
+            connectUrl, {
+                clientId: clientId,
+                username: process.env.MQTT_USERNAME,
+                password: process.env.MQTT_PASSWORD,  
+                connectTimeout: 10000,  
+            }
+        )
+        return mqttClient;
+    } catch (err) {
+        console.log('Connection to MQTT Broker failed: ', err);
+    }
 }
 
-const connectToMqttBroker = () => {
+
+///////////////////////////////////////////////////////////////// NOT USED ///////////////////////////////////////////////////////////////// 
+
+const connectToMqttBrokerPromise = () => {
 
     const connectUrl = `${process.env.MQTT_PROTOCOL}://${process.env.MQTT_HOST}:${process.env.MQTT_PORT}`
     const clientId = `mqttjs_${Math.random().toString(8).slice(2, 4)}`
@@ -34,12 +50,11 @@ const connectToMqttBroker = () => {
 }
 
 
-// not used
-const runMQTTConfig = async () => {
+const runMQTTConfig = () => {
     //const mqttClient = connectToMqttBroker();
 
-    const mqttClientPromise = connectToMqttBroker();
-    const mqttClient = await mqttClientPromise;
+    const mqttClient = connectToMqttBroker();
+    
 
     mqttClient.on('connect', (ack) => {
         //console.log('initiating mqtt_client.on("connect") function...')
@@ -82,7 +97,7 @@ const runMQTTConfig = async () => {
     return mqttClient;
 }
 
-//const mqttClient = runMQTTConfig();
+
 
 module.exports = {
     runMQTTConfig,

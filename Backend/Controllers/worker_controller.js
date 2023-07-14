@@ -5,6 +5,19 @@ const reconnectDBWorker = (mySQLClient) => {
     
 }
 
+const queryDataWorker = (query) => {
+    
+    const worker = new Worker(`./Backend/Workers/queryDataWorker.js`, { workerData: query });
+
+    worker.on('message', (data) => {
+        console.log('data from worker: ', data);
+    })
+
+    worker.on('error', (err) => {
+        console.log('An error has occured: ', err);
+    })
+}
+
 
 /*
 ///////////// SUBSCRIBING TO TOPIC /////////////
@@ -31,5 +44,5 @@ const deployWorkerSubscribe = (req, res, topic) => {
 }*/
 
 module.exports = {
-    deployWorkerSubscribe
+    queryDataWorker
 }

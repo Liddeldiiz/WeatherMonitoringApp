@@ -1,47 +1,141 @@
-//const mqttClient = require('../Config/mqtt_config');
+/////////////////////////////////// IMPORTS ///////////////////////////////////
+const { runMQTTConfig, connectToMqttBroker } = require('../Config/mqtt_config');
+const { 
+    getFunction,
+    getDeviceByIP,
+    insertIntoDevices_Test,
+    handleMessage
+
+} = require('../Controllers/mysql_controller');
+const { proxy1 } = require('../Data/dashboard');
+
+const {
+    getSubscribeTopicsSQL,
+    getPublishTopicsSQL
+} = require('../Queries');
+
+/////////////////////////////////// VARIABLES ///////////////////////////////////
+const deviceIP = [];
 
 
-const subscribeToAllTopics = (mqttClient, query) => {
-    return new Promise((resolve, reject) => {
-        try {
-            for (let i = 0; i < query.length; i++) {
-                mqttClient.subscribe(query[i].topics, () => {
-                    console.log(`Subscribed to topic: ${query[i].topics}`);
-                })
-            }
-            resolve(true);
-        } catch (err) {
-            console.log(`Subscribing failed due to: ${err}`);
-            reject(err);
-        }
+/////////////////////////////////// MQTT CLIENT ///////////////////////////////////
 
-    })
-}
+const mqttClient = connectToMqttBroker();
 
-const subscribeToTopic = (mqttClient, topic) => {
-    
-    return new Promise((resolve, reject) => {
-        
-        mqttClient.subscribe(topic, (err) => {
-            if (err) {
-                console.log('An error has occured: ', err)
-                reject(err);
-            } else {
-                console.log('MQTT Client subscribed to topic: ', topic);
-                mqttClient.on('message', (topic_subscribe, message) => {
-                    const device_ip = message.toString();
-                    //console.log('inside subscribeToTopic -> ', device_ip)
-                    resolve(device_ip);
-                })
-            }
-            
-            
+
+/////////////////////////////////// EVENTS ///////////////////////////////////
+
+mqttClient.on('connect', (ack) => {
+    //console.log('initiating mqtt_client.on("connect") function...')
+    if (!ack) {
+        console.log(`MQTT Client not connected!`)
+        proxy1.service_status_mqtt = false;
+        //console.log(`proxy1:${proxy1.service_status_mqtt}`);
+        delay(5000, () => {
+            console.log('Trying to connect to mqtt broker...')
+            runMQTTConfig();
         })
-        
-    })
+    } else {
+        console.log(`MQTT Client connected!`)
+        proxy1.service_status_mqtt = true;
+        getTopicsAndSubscribe();
+        //console.log(`proxy1:${proxy1.service_status_mqtt}`);
+        return mqttClient;
+        //console.log(ack)
+    }
+})
+
+mqttClient.on('disconnect', () => {
+    console.log('mqtt client disconnected');
+})
+
+mqttClient.on('error', (err) => {
+    //console.log('Error: mqttClient: ', err);
+    if (err === 'ECONNREFUSED') {
+        delay(5000, () => {
+            console.log('Trying to reconnect...');
+            runMQTTConfig();
+        })
+    }
+})
+
+mqttClient.on('message', (topic, message) => {
+    const message_ = message.toString();
+    if (topic == 'device/client_ip') {
+        console.log(message_);
+        deviceIP.push(message_);
+        console.log('checking device ip...');
+        checkDeviceIP(deviceIP);
+    }
+    deviceIP.pop();
+    if (topic === 'weather/data') {
+        var json = JSON.parse(msg);
+        handleMessage(topic, json);
+    }
+    return console.log(`topic: ${topic}, msg: ${msg}`);
+})
+
+mqttClient.on('close', () => {
+    console.log('mqtt connection closed');
+
+})
+
+/////////////////////////////////// FUNCTIONS ///////////////////////////////////
+
+// Get the topics to subscribe/publish
+const getTopicsAndSubscribe = async() => {
+    const queryTopicsSubscribePromise = getFunction(getSubscribeTopicsSQL);
+    const queryTopicSubscribe = await queryTopicsSubscribePromise;
+
+    try {
+        for(let i = 0; i < queryTopicSubscribe.length; i++) {
+            mqttClient.subscribe(queryTopicSubscribe[i].topics, () => {
+                console.log(`Subscribed to topicd: ${queryTopicSubscribe[i].topics}`);
+            })
+        }
+    } catch (err) {
+        console.log(`Subscribing failed due to ${err}`);
+    }
 }
 
-const publishToTopic = (mqttClient, topic, message) => {
+
+const checkDeviceIP = async (deviceIP) => {
+
+    const topicPublishPromise = getFunction(getPublishTopicsSQL);
+    const topicPublish = await topicPublishPromise;
+    
+    const deviceIDPromise = getDeviceByIP(deviceIP[0]);
+    const deviceIDResult = await deviceIDPromise;
+    console.log(`publishing on topic: ${topicPublish[1].topics}`);
+    if (deviceIDResult[0] === false) {
+        const deviceID = await generateClientID(); // calling func to generate client id on server side if device has no entry in DB
+        console.log(`Generated client ID: ${deviceID}`);
+        insertIntoDevices_Test([[deviceID, deviceIP[0]]]); // adding the device to the DB
+        const msgReject = `{ device_ip: ${deviceIP[0]}, device_id: ${deviceID} }`;
+        const publishPromise = publishToTopic(mqttClient, topicPublish[1].topics, msgReject);
+        const response = await publishPromise;
+        console.log(`Response: ${response}`);        
+    } else {
+        console.log('deviceIP: ', deviceIP[0]);
+        console.log('device_id: ', deviceIDResult[0].clientID);
+        const msgResolve = `{ "device_ip": "${deviceIP[0]}", "device_id": "${deviceIDResult[0].clientID}" }`;
+        const publishPromise = publishToTopic(mqttClient, topicPublish[1].topics, msgResolve);
+        const response = await publishPromise;
+        console.log(`Response: ${response}`);
+    }    
+}
+
+function generateClientID() {
+    return new Promise((resolve) => {
+        const clientID = 'ESP8266Client-' + Math.floor(Math.random() * 0xffff).toString(16);
+
+        setTimeout(() => {
+            resolve(clientID);
+        }, 2000);
+    });
+}
+
+const publishToTopic = (topic, message) => {
 
     return new Promise((resolve, reject) => {
         mqttClient.publish(topic, message, { retain: true }, (err) => {
@@ -58,41 +152,9 @@ const publishToTopic = (mqttClient, topic, message) => {
     
 }
 
-const onMessage = () => {
-    mqttClient.on('message', function(topic, message) {
-        
-        return message.toString();
-        //res.status(200).json({ success: true, msg: message.toString() })
-    })
-}
+
+/////////////////////////////////// EXPORTS ///////////////////////////////////
 
 module.exports = {
-    subscribeToAllTopics,
-    subscribeToTopic,
-    publishToTopic,
-    onMessage
+
 }
-
-/* 
-const publishToTopic = (req, res) => {
-    console.log(req.body);
-    const {topic} = req.body;
-    const {msg} = req.body;
-
-    if(!msg) {
-        return res.status(400).json({ success: false, msg: 'please provide msg value' })
-    } else if (!topic) {
-        return res.status(400).json({ success: false, msg: 'please provide topic value' })
-    }
-
-    mqtt_async_client.publish(topic, msg, { retain: true }, (err) => {
-        if (err) {
-            console.log(`Failed to publish msg: ${msg}\nTo topic: ${topic}`);
-            return res.status(500).json({ success: false, msg: 'something went wrong' })
-        } else {
-            console.log('message published with retain flag set to true');
-            return res.status(201).json({ success: true, msg: `msg: ${msg} | published in topic: ${topic}` });
-        }
-    })
-}
-*/
