@@ -1,13 +1,17 @@
 /////////////////////////////////// IMPORTS ///////////////////////////////////
 const { runDBConfig, connectToDB } = require('../Config/mysql_config');
 const { proxy1 } = require('../Data/dashboard');
+const { proxy_test } = require('../Data/test');
 
 const {
+    getAllDevicesSQL,
     getDeviceByIPSQL, 
     getDeviceByClientIDSQL, 
     getTempForSelectedDevicesSQL, 
     insertNewDeviceSQL, 
-    insertNewWeahterDataSQL
+    insertNewWeahterDataSQL,
+    getAllWeatherDataForSelectedDevicesSQL,
+    getAllTopicsSQL,
 } = require('../Queries');
 
 /////////////////////////////////// MYSQL CLIENT ///////////////////////////////////
@@ -20,6 +24,7 @@ mySQLClient.connect((err) => {
     if (err) {
         console.error('Error connecting to MySQL server: ', err);
         proxy1.service_status_db = false;
+        proxy_test.service_status_db = false;
         //triggerDisplayDashboard.service_status_db = false;
         //setServiceStatusDB(false);
         delay(5000, () => {
@@ -29,6 +34,7 @@ mySQLClient.connect((err) => {
     } else {
         console.log('MySQL Client connected')
         proxy1.service_status_db = true;
+        proxy_test.service_status_db = true;
         //triggerDisplayDashboard.service_status_db = true;
         //setServiceStatusDB(true);
     }
@@ -50,9 +56,50 @@ mySQLClient.on('error', (err) => {
 
 /////////////////////////////////// FUNCTIONS ///////////////////////////////////
 
+////////////////// DEVICES //////////////////
+
+// GET //
+
+const getAllDevices = () => {
+    return new Promise((resolve, reject) => {
+        var counter = 0;
+        const query_result = {};
+
+        var query = mySQLClient.query(getAllDevicesSQL);
+
+        query
+            .on('error', function(err) {
+                if (err) reject(err);
+            })
+            .on('result', function(row) {
+                //console.log(row);
+                //query_test.push(row);
+                
+                var resultObj = {
+                    "device_id": row.id,
+                    "client_id": row.clientID
+                }
+                
+                query_result[counter] = resultObj;
+                counter += 1;
+            })
+            .on('end', function() {
+                console.log('Query successful');
+                resolve(query_result);
+            })
+    })
+}
+
+// to be updated!
+const getDeviceByID = (mySQLClient, values) => {
+    var sql = "SELECT * FROM devices_test where id in ?;";
+
+}
+
 const getDeviceByIP = (device_ip) => {
     return new Promise((resolve, reject) => {
         
+        console.log('getDeviceByIP: values: ', device_ip);
         var sqlParams = [device_ip]
         const query_result = [];
         var query = mySQLClient.query(getDeviceByIPSQL, sqlParams);
@@ -73,34 +120,6 @@ const getDeviceByIP = (device_ip) => {
                 resolve(query_result);
             });
     })
-    
-
-    
-    //return row
-    
-    //console.log(`Result in mysql_controller after mysql_client: ${query_result}`);
-    //return result;
-}
-
-const getFunction = (sql) => {
-    
-    return new Promise((resolve, reject) => {
-        const query_result = [];
-        var query = mySQLClient.query(sql);
-        query
-            .on('error', function(err) {
-                if (err) reject(err);
-            })
-            .on('result', function(row) {
-                query_result.push(row);
-            })
-            .on('end', function() {
-                console.log('Query successful');
-                //console.log(query_result);
-                resolve(query_result);
-            })
-    })
-    
 }
 
 const getDeviceByClientID = (ClientID) => {
@@ -126,36 +145,8 @@ const getDeviceByClientID = (ClientID) => {
     
 }
 
-const getDeviceByID = (mySQLClient, values) => {
-    var sql = "SELECT * FROM devices_test where id in ?;";
-
-}
-
-const getTemp = (values) => {
-    var sql = "SELECT createDate, device_id, temperature FROM weather_data where device_id in ?;";
-
-    const query_result = [];
-    var query = mySQLClient.query(getTempForSelectedDevicesSQL, [values]);
-    query
-        .on('error', function(err) {
-            if (err) console.log(err);
-        })
-        .on('result', function(row) {
-            query_result.push(row);
-        })
-        .on('end', function() {
-            console.log('Query successful');
-            console.log(query_result);
-            //resolve(query_result);
-        })
-}
-
-const handleCustomGetTemp = () => {
-
-}
-
-// INSERT
-
+// INSERT //
+// to be updated!
 const insertIntoDevices_Test = (values) => {
     var sql = "INSERT INTO devices_test (clientID, clientIP) VALUES ?;"
 
@@ -171,6 +162,63 @@ const insertIntoDevices_Test = (values) => {
             console.log('Query successful');
         })
 }
+
+////////////////// WHEATHER //////////////////
+
+// GET //
+
+const getAllWeatherDataForSelectedDevices = (values) => {
+    return new Promise((resolve, reject) => {
+        var counter = 0;
+        const query_result = {};
+        var query = mySQLClient.query(getAllWeatherDataForSelectedDevicesSQL, [values]);
+        query
+            .on('error', function(err) {
+                if (err) reject(err);
+            })
+            .on('result', function(row) {
+                var resultObj = {
+                    "date": row.createDate,
+                    "device_id": row.device_id,
+                    "temperature": row.temperature,
+                    "humidity": row.humidity
+                }
+                query_result[counter] = resultObj;
+                counter += 1;
+            })
+            .on('end', function() {
+                console.log('Query successful');
+                resolve(query_result);
+            })
+    })
+}
+
+const getTempForSelectedDevices = (values) => {
+    return new Promise((resolve, reject) => {
+        var counter = 0;
+        const query_result = {};
+        var query = mySQLClient.query(getTempForSelectedDevicesSQL, [values]);
+        query
+            .on('error', function(err) {
+                if (err) reject(err);
+            })
+            .on('result', function(row) {
+                var resultObj = {
+                    "date": row.createDate,
+                    "device_id": row.device_id,
+                    "temperature": row.temperature
+                }
+                query_result[counter] = resultObj;
+                counter += 1;
+            })
+            .on('end', function() {
+                console.log('Query successful');
+                resolve(query_result);
+            })
+    })
+}
+
+// INSERT //
 
 const insertIntoWeather_Data = async (values) => {
     return new Promise((resolve, reject) => {
@@ -193,16 +241,45 @@ const insertIntoWeather_Data = async (values) => {
     })
 }
 
+////////////////// TOPICS //////////////////
+
+const getAllTopics = () => {
+    return new Promise((resolve, reject) => {
+        var counter = 0;
+        const query_result = {};
+
+        var query = mySQLClient.query(getAllTopicsSQL);
+        query
+            .on('error', function(err) {
+                if (err) reject(err);
+            })
+            .on('result', function(row) {
+                //query_test.push(row);
+                console.log(row);
+                
+                var resultObj = {
+                    "topic": row.topics,
+                    "subscribe": row.subscribe,
+                    "publish": row.publish
+                }
+                
+                query_result[counter] = resultObj;
+                counter += 1;
+            })
+            .on('end', function() {
+                console.log('Query successful');
+                resolve(query_result);
+            })
+    })
+}
+
+////////////////// HELPER FUNCTIONS //////////////////
+
 const handleMessage = async (topic, msg) => {
     
     if (topic === 'weather/data') {
-        console.log(`msg.device_id = ${msg.device_id}`);
         DeviceIDPromise = getDeviceByClientID(msg.device_id);
         DeviceID = await DeviceIDPromise;
-
-        console.log(DeviceID[0].id);
-        console.log(msg.temperature);
-        console.log(msg.humidity);
 
         const values = [DeviceID[0].id, msg.temperature, msg.humidity];
 
@@ -212,15 +289,48 @@ const handleMessage = async (topic, msg) => {
     }
 }
 
+const handleTempDataFromDB = async(values) => {
+    getTempPromise = await getTemp([values]);
+    getTempDone = getTempPromise;
+
+    return getTempDone;
+}
+
+////////////////// NOT USED FUNCTIONS //////////////////
+
+const getFunction = (sql) => {
+    
+    return new Promise((resolve, reject) => {
+        const query_result = [];
+        var query = mySQLClient.query(sql);
+        query
+            .on('error', function(err) {
+                if (err) reject(err);
+            })
+            .on('result', function(row) {
+                query_result.push(row);
+            })
+            .on('end', function() {
+                console.log('Query successful');
+                //console.log(query_result);
+                resolve(query_result);
+            })
+    })
+    
+}
 
 /////////////////////////////////// EXPORTS ///////////////////////////////////
 
 module.exports =  {
     getDeviceByIP,
     getFunction,
-    getTemp,
+    getTempForSelectedDevices,
     insertIntoDevices_Test,
     insertIntoWeather_Data,
     getDeviceByClientID,
     handleMessage,
+    handleTempDataFromDB,
+    getAllWeatherDataForSelectedDevices,
+    getAllDevices,
+    getAllTopics,
 }

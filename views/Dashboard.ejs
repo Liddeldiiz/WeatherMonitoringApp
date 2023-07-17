@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
     <link href="../static/css/Dashboard.css" rel="stylesheet" type="text/css">
+
+    <script src="../static/js/dashboard_data.js" type="application/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!--<script src="dashboard_weather.js" type="module"></script>-->
+    
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@^0.1.0/dist/chartjs-adapter-moment.min.js"></script>
+
+
 </head>
 <body>
     
@@ -69,7 +79,10 @@
     </div>
     
     <div>
-        <canvas id="chart" width="400", height="100">
+        <canvas id="temp_chart" width="400", height="100">
+
+        </canvas>
+        <canvas id="hum_chart" width="400", height="100">
 
         </canvas>
         <form onsubmit="handleSubmit(event)">
@@ -77,55 +90,141 @@
             <button type="submit">Submit</button>
         </form>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
-    var counter = 0;
-    function fetchDataAndUpdate() {
-        fetch('/api/data_dashboard')
-            .then(response => response.json())
-            .then(updatedData => {
-                if (updatedData.service_status_db) {
-                    document.getElementById('service_status_db').textContent = "Connected";
-                } else {
-                    document.getElementById('service_status_db').textContent = "Connecting...";
-                }
-                
-                if (updatedData.service_status_mqtt) {
-                    document.getElementById('service_status_mqtt').textContent = "Connected";
-                } else {
-                    document.getElementById('service_status_mqtt').textContent = "Connecting...";
-                }
-                
-                //document.getElementById(/*one by one*/);
-            })
+        const not_unique_device_ids = [];
+
+        const device1_temp = [];
+        const device2_temp = [];
+        const device3_temp = [];
+
+        const device1_hum = [];
+        const device2_hum = [];
+        const device3_hum = [];
+
+        const tempDataFromDB = [
+            { label: 'Device 1', values: device1_temp, fill: false, borderColor: 'rgb(75, 192, 192)', tension: 0.1 },
+            { label: 'Device 2', values: device2_temp, fill: false, borderColor: 'rgb(255, 75, 25)', tension: 0.1 },
+            { label: 'Device 3', values: device3_temp, fill: false, borderColor: 'rgb(130, 130, 130)', tension: 0.1 }
+        ];
+
+        const humDataFromDB = [
+            { label: 'Device 1', values: device1_hum, fill: false, borderColor: 'rgb(75, 192, 192)', tension: 0.1 },
+            { label: 'Device 2', values: device2_hum, fill: false, borderColor: 'rgb(255, 75, 25)', tension: 0.1 },
+            { label: 'Device 3', values: device3_hum, fill: false, borderColor: 'rgb(130, 130, 130)', tension: 0.1 }
+        ];
+
+        function fetchTempData() {
+            fetch('/api/data_dashboard/weather')
+                .then(response => response.json())
+                .then(dataFromBackend => {
+                    for(let i = 0; i < Object.getOwnPropertyNames(dataFromBackend).length; i++) {
+                        if (dataFromBackend[i].device_id == 1) {
+                            not_unique_device_ids.push(dataFromBackend[i].device_id);
+                            //device1_labels.push(dataFromBackend[i].date);
+                            device1_temp.push({x: dataFromBackend[i].date, y: dataFromBackend[i].temperature});
+                            device1_hum.push({x: dataFromBackend[i].date, y: dataFromBackend[i].humidity});
+                        }
+                        else if (dataFromBackend[i].device_id == 6) {
+                            not_unique_device_ids.push(dataFromBackend[i].device_id);
+                            //device2_labels.push(dataFromBackend[i].date);
+                            device2_temp.push({x: dataFromBackend[i].date, y: dataFromBackend[i].temperature});
+                            device2_hum.push({x: dataFromBackend[i].date, y: dataFromBackend[i].humidity});
+                        }
+                        else if (dataFromBackend[i].device_id == 23) {
+                            not_unique_device_ids.push(dataFromBackend[i].device_id);
+                            //device3_labels.push(dataFromBackend[i].date);
+                            device3_temp.push({x: dataFromBackend[i].date, y: dataFromBackend[i].temperature});
+                            device3_hum.push({x: dataFromBackend[i].date, y: dataFromBackend[i].humidity});
+                        }
+                    }
+
+                    const tempDatasets = tempDataFromDB.map((data) => {
+                        return {
+                            label: data.label,
+                            data: data.values,
+                            fill: data.fill, 
+                            borderColor: data.borderColor, 
+                            tension: data.tension
+                        }
+                    })
+
+                    const humDatasets = humDataFromDB.map((data) => {
+                        return {
+                            label: data.label,
+                            data: data.values,
+                            fill: data.fill, 
+                            borderColor: data.borderColor, 
+                            tension: data.tension
+                        }
+                    })
+
+                    temp_chart.data.datasets = tempDatasets;
+                    hum_chart.data.datasets = humDatasets;
+
+                    temp_chart.update();
+                    hum_chart.update();
+                    
+                })
+        }
+            
+        fetchTempData();
         
-        counter += 1;
-        document.getElementById('counter').textContent = counter;
-    }
+        const ctx_temp = document.getElementById('temp_chart');
+        const ctx_hum = document.getElementById('hum_chart');
 
-    setInterval(fetchDataAndUpdate, 3000);
-
-    fetchDataAndUpdate();
-    </script>
-
-    <script>
-        const ctx = document.getElementById('chart');
-
-        const labels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24];
-        new Chart(ctx, {
+        const temp_chart = new Chart(ctx_temp, {
             type: 'line',
             data: {
-                labels: labels,
-                datasets: [{
-                    label: 'a1',
-                    data: [25, 25, 26, 25, 27, 24, 25, 26, 27, 24, 25, 26, 23, 26, 25, 27, 24, 25, 26, 27, 24, 25, 26, 23, 24, 25, 26, 20],
-                    fill: false,
-                    borderColor: 'rgb(75, 192, 192)',
-                    tension: 0.1
-                }]
+                datasets: []
+            },
+            options: {
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            unit: 'hour',
+                            displayFormats: {
+                                hour: 'HH:mm'
+                            }
+                        },
+                        ticks: {
+                            source: 'data'
+                        }
+                    },
+                    y: {
+
+                    }
+                }
             }
         })
+
+        const hum_chart = new Chart(ctx_hum, {
+            type: 'line',
+            data: {
+                datasets: []
+            },
+            options: {
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            unit: 'hour',
+                            displayFormats: {
+                                hour: 'HH:mm'
+                            }
+                        },
+                        ticks: {
+                            source: 'data'
+                        }
+                    },
+                    y: {
+
+                    }
+                }
+            }
+        })
+
     </script>
     <script>
         function handleSubmit(event) {

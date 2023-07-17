@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    .tooltip {
+      position: fixed;
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 5px;
+      border-radius: 5px;
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      pointer-events: none; /* Ensures the tooltip doesn't interfere with mouse interactions */
+    }
+  </style>
+</head>
+<body>
+  <div id="myElement">Hover over me</div>
+
+  <script>
+    var element = document.getElementById("myElement");
+
+    element.addEventListener("mouseover", function(event) {
+      var tooltip = document.createElement("div");
+      tooltip.className = "tooltip";
+      tooltip.innerText = "Hello, mouseover!";
+
+      // Position the tooltip relative to the mouse cursor
+      tooltip.style.left = (event.pageX + 10) + "px";
+      tooltip.style.top = (event.pageY + 10) + "px";
+
+      // Append the tooltip to the document body
+      document.body.appendChild(tooltip);
+    });
+
+    element.addEventListener("mouseout", function() {
+      var tooltips = document.getElementsByClassName("tooltip");
+
+      // Remove all existing tooltips
+      while (tooltips.length > 0) {
+        tooltips[0].parentNode.removeChild(tooltips[0]);
+      }
+    });
+  </script>
+</body>
+</html>

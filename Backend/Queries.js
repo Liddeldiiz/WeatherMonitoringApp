@@ -24,6 +24,8 @@ var getAllHumSQL = 'SELECT humidity FROM devices_data;';
 
 var getHumForSelectedDevicesSQL = "SELECT createDate, device_id, humidity FROM weather_data where device_id in ?;";
 
+var getAllWeatherDataForSelectedDevicesSQL = "SELECT createDate, device_id, temperature, humidity FROM weather_data where device_id in ?;";
+
 
 // INSERT //
 var insertNewWeahterDataSQL = "INSERT INTO weather_data (device_id, temperature, humidity) VALUES ?"
@@ -34,6 +36,8 @@ var insertNewWeahterDataSQL = "INSERT INTO weather_data (device_id, temperature,
 var getSubscribeTopicsSQL = 'SELECT * FROM devices_topics WHERE subscribe = 1 AND publish = 0;';
 
 var getPublishTopicsSQL = 'SELECT * FROM devices_topics WHERE publish = 1 AND subscribe = 0;';
+
+var getAllTopicsSQL = 'SELECT * FROM devices_topics;'
 
 
 
@@ -53,10 +57,12 @@ module.exports = {
     getAllHumSQL,
     getHumForSelectedDevicesSQL,
     insertNewWeahterDataSQL,
+    getAllWeatherDataForSelectedDevicesSQL,
 
     // TOPICS //
     getSubscribeTopicsSQL,
     getPublishTopicsSQL,
+    getAllTopicsSQL,
 }
 
 

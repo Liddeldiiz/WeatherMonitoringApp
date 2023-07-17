@@ -17,8 +17,14 @@ app.use(router_esp);
 app.use(router_workers);
 app.use(router_dom);
 
+app.use((req, res, next) => {
+    if (req.url.endsWith('.js')) {
+        res.setHeader('Content-Type', 'application/javascript');
+    }
+    next();
+})
+
 app.listen(5000, () => {
     console.log('Server is listening on port 5000')
-    
 });
 

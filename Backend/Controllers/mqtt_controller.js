@@ -8,6 +8,7 @@ const {
 
 } = require('../Controllers/mysql_controller');
 const { proxy1 } = require('../Data/dashboard');
+const { proxy_test } = require('../Data/test');
 
 const {
     getSubscribeTopicsSQL,
@@ -30,6 +31,7 @@ mqttClient.on('connect', (ack) => {
     if (!ack) {
         console.log(`MQTT Client not connected!`)
         proxy1.service_status_mqtt = false;
+        proxy_test.service_status_mqtt = false;
         //console.log(`proxy1:${proxy1.service_status_mqtt}`);
         delay(5000, () => {
             console.log('Trying to connect to mqtt broker...')
@@ -38,6 +40,7 @@ mqttClient.on('connect', (ack) => {
     } else {
         console.log(`MQTT Client connected!`)
         proxy1.service_status_mqtt = true;
+        proxy_test.service_status_mqtt = true;
         getTopicsAndSubscribe();
         //console.log(`proxy1:${proxy1.service_status_mqtt}`);
         return mqttClient;
@@ -60,24 +63,35 @@ mqttClient.on('error', (err) => {
 })
 
 mqttClient.on('message', (topic, message) => {
+    //console.log(`topic: ${topic}, message: ${message}`);
+    
     const message_ = message.toString();
     if (topic == 'device/client_ip') {
         console.log(message_);
+        var json = {'topic': topic, 'message': message.toString()};
+        
+        console.log(json.message);
+        proxy_test.incomingMsg = json;
         deviceIP.push(message_);
+        console.log('deviceIP[0]: ', deviceIP[0]);
         console.log('checking device ip...');
-        checkDeviceIP(deviceIP);
+        checkDeviceIP();
     }
-    deviceIP.pop();
+    
     if (topic === 'weather/data') {
-        var json = JSON.parse(msg);
-        handleMessage(topic, json);
+        var msg_json = JSON.parse(message);
+        var json = {'topic': topic, 'message': msg_json} // issue here
+        // {topic: weather/data, message: {"device_id":"ESP8266Client-ca0f","temperature":28.60000038,"humidity":58.70000076}}
+        proxy_test.incomingMsg = json;
+        console.log(json);
+        handleMessage(topic, msg_json);
     }
-    return console.log(`topic: ${topic}, msg: ${msg}`);
+    return;
 })
 
 mqttClient.on('close', () => {
     console.log('mqtt connection closed');
-
+    proxy_test.service_status_mqtt = false;
 })
 
 /////////////////////////////////// FUNCTIONS ///////////////////////////////////
@@ -99,12 +113,15 @@ const getTopicsAndSubscribe = async() => {
 }
 
 
-const checkDeviceIP = async (deviceIP) => {
+const checkDeviceIP = async () => {
 
+
+    console.log(deviceIP[0]);
     const topicPublishPromise = getFunction(getPublishTopicsSQL);
     const topicPublish = await topicPublishPromise;
     
     const deviceIDPromise = getDeviceByIP(deviceIP[0]);
+    
     const deviceIDResult = await deviceIDPromise;
     console.log(`publishing on topic: ${topicPublish[1].topics}`);
     if (deviceIDResult[0] === false) {
@@ -116,9 +133,8 @@ const checkDeviceIP = async (deviceIP) => {
         const response = await publishPromise;
         console.log(`Response: ${response}`);        
     } else {
-        console.log('deviceIP: ', deviceIP[0]);
-        console.log('device_id: ', deviceIDResult[0].clientID);
         const msgResolve = `{ "device_ip": "${deviceIP[0]}", "device_id": "${deviceIDResult[0].clientID}" }`;
+        deviceIP.pop();
         const publishPromise = publishToTopic(mqttClient, topicPublish[1].topics, msgResolve);
         const response = await publishPromise;
         console.log(`Response: ${response}`);
