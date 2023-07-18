@@ -1,0 +1,54 @@
+.mqtt-outgoing {
+    display: flex;
+    justify-content: center;
+    border-style: solid;
+    border-color: black;
+    border-bottom: none;
+    border-left: none;
+    /*
+    height: 30vh;
+    width: 18vw;
+
+    */
+}
+
+.outgoingMsg-table {
+    box-sizing: border-box;
+    border-collapse: collapse;
+    width: 18vw;
+    height: 30vh;
+}
+
+.row-0-outgoingMsg {
+    display: flex;
+    gap: 5vw;
+    margin-top: 1vh;
+    border-bottom-style: solid;
+    border-bottom-color: black;
+    margin-left: 3vw;
+}
+
+.topic_outgoing, .message_outgoing {
+    height: 4vh;
+}
+
+/*
+.row-0-outgoingMsg {
+    display: flex;
+    gap: 5vw;
+    border-bottom-style: solid;
+    border-bottom-color: black;
+}
+*/
+/*//////////////////////////////////////////////////////// DEVICE-BAR ////////////////////////////////////////////////////////*/
+
+.device-bar {
+    margin-right: 5vw;
+}
+
+.mqtt-bar, .device-bar {
+    border-style: solid;
+    border-color: black;
+    max-width: 40vw;
+    min-width: 40vw;
+}

@@ -1,13 +1,14 @@
 const { triggerTestUpdate } = require('../Controllers/test_controller');
 
-function Data_test(incomingMsg, outgoingMsg, service_status_db, service_status_mqtt) {
+function Data_test(incomingMsg, outgoingMsg, popupNotification, service_status_db, service_status_mqtt) {
     this.incomingMsg = incomingMsg;
     this.outgoingMsg = outgoingMsg;
+    this.popupNotification = popupNotification;
     this.service_status_db = service_status_db;
     this.service_status_mqtt = service_status_mqtt;
 }
 
-const data_test = new Data_test({}, {}, false, false);
+const data_test = new Data_test({}, {}, {}, false, false);
 
 const get_data_test = () => {
     return data_test;

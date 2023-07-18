@@ -1,0 +1,134 @@
+.first-row {
+    margin-top: -2vh;
+    padding: 0;
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    justify-content: flex-start;
+    
+    /*gap: 1vw;*/
+}
+
+.second-row {
+    padding-top: 5vh;
+    max-width: 100vw;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+/*//////////////////////////////////////////////////////// MQTT-BAR ////////////////////////////////////////////////////////*/
+
+.mqtt-bar {
+    margin-left: 5vw;
+    display: flex;
+    flex-direction: row;   
+}
+
+/*//////////////////////////////////////////////////////// MQTT-TOPICS ////////////////////////////////////////////////////////*/
+
+.mqtt-topics {
+    margin-left: 1vw;
+    border-style: solid;
+    border-color: black;
+}
+
+/*//////////////////////////////////////////////////////// MQTT-MESSAGES ////////////////////////////////////////////////////////*/
+
+.mqtt-messages {
+    display: flex;
+    flex-direction: column;
+    gap: 2vh;
+    
+}
+
+.mqtt-incoming, .empty-incoming-msg-body {
+    display: flex;
+    justify-content: center;
+    
+    height: 30vh;
+    width: 18vw;
+}
+
+/*//////////////////////////////////////////////////////// MQTT-INCOMING ////////////////////////////////////////////////////////*/
+
+.mqtt-incoming {
+    border-style: solid;
+    border-color: black;
+    border-top: none;
+    border-left: none;
+}
+
+/*//////////////////////////////////////////////////////// INCOMINGMSG-TABLE ////////////////////////////////////////////////////////*/
+
+.incomingMsg-table {
+    border-collapse: collapse;
+    width: 100%;
+    height: 100%;
+    margin-bottom: 1vh;
+}
+
+
+
+.topic, .message {
+    height: 4vh;
+    margin-left: 1vw;
+    margin-right: 1vw;
+}
+
+/*//////////////////////////////////////////////////////// TOPIC ////////////////////////////////////////////////////////*/
+
+.topic {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+#topic, #message {
+    padding-top: 1vh;
+}
+
+
+/*//////////////////////////////////////////////////////// INCOMINGMSG-TOPIC-COL ////////////////////////////////////////////////////////*/
+
+#incomingMsg-topic-col {
+    height: 23.5vh;
+    border-right-style: solid;
+    border-right-color: black;
+    margin-bottom: 5px;
+    padding-right: 3vh;
+
+}
+
+/*//////////////////////////////////////////////////////// INCOMINGMSG-MESSAGE-COL ////////////////////////////////////////////////////////*/
+
+#incomingMsg-message-col {
+    align-self: center;
+
+}
+
+/*//////////////////////////////////////////////////////// ROW-0-INCOMINGMSG ////////////////////////////////////////////////////////*/
+
+.row-0-incomingMsg {
+    display: flex;
+    gap: 5vw;
+    margin-top: 1vh;
+    border-bottom-style: solid;
+    border-bottom-color: black;
+}
+
+/*//////////////////////////////////////////////////////// ROW-1-INCOMINGMSG ////////////////////////////////////////////////////////*/
+
+.row-1-incomingMsg {
+    display: flex;
+    align-items: center;
+    min-height: 100%;
+}
+
+.mqtt-bar, .device-bar {
+    border-style: solid;
+    border-color: black;
+    max-width: 40vw;
+    min-width: 40vw;
+}

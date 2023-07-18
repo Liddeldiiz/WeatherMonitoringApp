@@ -12,6 +12,10 @@ var getDeviceByClientIDSQL = "SELECT id FROM devices_test WHERE clientID = ?";
 var insertNewDeviceSQL = "INSERT INTO devices_test (clientID, clientIP) VALUES ?;"
 
 
+/////////////////////////////////// DEVICE SETTINGS ///////////////////////////////////
+// GET //
+var getSettingsForAllDevices = 'SELECT device_id, settings_property, settings_value, modify_date FROM devices_settings ORDER BY device_id ASC;';
+
 /////////////////////////////////// WEATHER DATA ///////////////////////////////////
 // GET //
 var getAllDataForOneDeviceSQL = 'SELECT * FROM devices_data WHERE device_id = ?;';
