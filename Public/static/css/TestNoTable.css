@@ -40,17 +40,33 @@
     flex-direction: column;
     
 }
-.mqtt-incoming,
-.mqtt-outgoing,
-.empty-incoming-msg-body {
+
+.empty-incoming-msg-body, .empty-outgoing-msg-body {
     display: flex;
     justify-content: center;
     height: 34vh;
     width: 22vw;
+    border: none
+}
+
+.mqtt-incoming,
+.mqtt-outgoing {
+    display: flex;
+    justify-content: center;
+    height: 34vh;
+    width: 22vw;
+}
+
+.mqtt-incoming {
     border-style: solid;
     border-color: black;
     border-top: none;
     border-left: none;
+}
+
+.mqtt-outgoing {
+    border-right-style: solid;
+    border-right-color: black;
 }
 
 .incomingMsg-topic,

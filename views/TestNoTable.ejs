@@ -60,6 +60,84 @@
     const nodeArrMsg_outgoing = [];
     const nodeArrJsonMsg_outgoing = [];
 
+    var isSettingUpIncoming = true;
+    var isSettingUpOutgoing = true;
+
+    const db_icon = document.getElementById('svg-db');
+    const mqtt_icon = document.getElementById('svg-mqtt');
+
+    const mqtt_incoming_id_string = 'mqtt-incoming-id';
+    var mqtt_incoming_id = document.createElement('div');
+
+    const mqtt_outoging_id_string = 'mqtt-outgoing-id';
+    var mqtt_outgoing_id = document.createElement('div');
+
+    const empty_body_string = 'empty-incoming-msg-body';
+    var empty_body_div;
+
+    const empty_outgoing_body_string = 'empty-outgoing-msg-body';
+    var empty_outgoing_body_div = document.getElementById(empty_outgoing_body_string);
+
+    //// INCOMOING ////
+    const incomingMsg_topic_string = 'incomingMsg-topic';
+    var incomingMsg_topic = document.createElement('div');
+
+    const incomingMsg_message_string = 'incomingMsg-message';
+    var incomingMsg_message = document.createElement('div');
+
+    const incomingMsg_topic_title_string = 'incomingMsg-topic-title';
+    var incomingMsg_topic_title = document.createElement('div');
+
+    const incomingMsg_message_title_string = 'incomingMsg-message-title';
+    var incomingMsg_message_title = document.createElement('div');
+
+    const incomingMsg_topic_content_string = 'incomingMsg-topic-content';
+    var incomingMsg_topic_content = document.createElement('div');
+
+    const incomingMsg_message_content_string = 'incomingMsg-message-content';
+    var incomingMsg_message_content = document.createElement('div');
+
+    const incomingMsg_message_content_row_id = incomingMsg_message_content_string;
+    const incomingMsg_message_content_row_class = `${incomingMsg_message_content_row_id}-row`;
+    var incomingMsg_message_content_row;
+
+    const incomingMsg_message_content_row_column_key_id = incomingMsg_message_content_row_class;
+    var incomingMsg_message_content_row_column_key;
+
+    const incomingMsg_message_content_row_column_value_id = incomingMsg_message_content_string;
+    var incomingMsg_message_content_row_column_value;
+
+
+    //// OUTGOING ////
+    const outgoingMsg_topic_string = 'outgoingMsg-topic';
+    var outgoingMsg_topic = document.createElement('div');
+
+    const outgoingMsg_message_string = 'outgoingMsg-message';
+    var outgoingMsg_message = document.createElement('div');
+
+    const outgoingMsg_topic_title_string = 'outgoingMsg-topic-title';
+    var outgoingMsg_topic_title = document.createElement('div');
+
+    const outgoingMsg_message_title_string = 'outgoingMsg-message-title';
+    var outgoingMsg_message_title = document.createElement('div');
+
+    const outgoingMsg_topic_content_string = 'outgoingMsg-topic-content';
+    var outgoingMsg_topic_content = document.createElement('div');
+
+    const outgoingMsg_message_content_string = 'outgoingMsg-message-content';
+    var outgoingMsg_message_content = document.createElement('div');
+
+    const outgoingMsg_message_content_row_id = outgoingMsg_message_content_string;
+    const outgoingMsg_message_content_row_class = `${outgoingMsg_message_content_row_id}-row`;
+    var outgoingMsg_message_content_row;
+
+    const outgoingMsg_message_content_row_column_key_id = outgoingMsg_message_content_row_class;
+    var outgoingMsg_message_content_row_column_key;
+
+    const outgoingMsg_message_content_row_column_value_id = outgoingMsg_message_content_string;
+    var outgoingMsg_message_content_row_column_value;
+
+
     /////////////////////////////////// FUNCTIONS ///////////////////////////////////
 
     function createNodeWithParams(node_element, text, id, flag, id_self, class_self) {
@@ -142,62 +220,87 @@
         })
     }
 
-    function createMsgForWeatherData(updatedData) {
-        let node_incomingMsg = document.createElement('td');
-        //node_incomingMsg.id = 'msg-th';
+    function createMsgForWeatherData(updatedData, keysArr) {
+        for(let i = 0; i < keysArr.length; i++) {
+            // Message
+            // creating the second column of the second row                                                        
+            incomingMsg_message_content_row = document.createElement('div');
+            incomingMsg_message_content_row.id = `${incomingMsg_message_content_string}-${i}`;
+            incomingMsg_message_content_row.className = incomingMsg_message_content_row_class;
+            incomingMsg_message_content.appendChild(incomingMsg_message_content_row);
 
-        // creating inner table for the message property from backend json
-        let node_incomingMsg_table = document.createElement('table');
-        node_incomingMsg_table.id = 'incomingMsg-inner-table';
-        node_incomingMsg_table.className = 'incomingMsg-inner-table';
+            incomingMsg_message_content_row_column_key = document.createElement('div');
+            incomingMsg_message_content_row_column_key.id = `incomingMsg-message-content-row-${i}-column-key`;
+            incomingMsg_message_content_row_column_key.className = `incomingMsg-message-content-row-column-key`;
+            document.getElementById(incomingMsg_message_content_row.id).appendChild(incomingMsg_message_content_row_column_key);
+            document.getElementById(incomingMsg_message_content_row_column_key.id).textContent = keysArr[i];
 
-        // appending the inner table to the second column second row dom object
-        node_incomingMsg.appendChild(node_incomingMsg_table);
-        node_incomingMsg.id = 'incomingMsg-message-col';
-
-        // appending the second row seconde column dom object to the existing row id
-        document.getElementById(nodeArrMsg_incoming[1].id).appendChild(node_incomingMsg);
-
-        // creating new rows for the inner table -> new array needed here (nodeArrJsonMsg)
-        createRowsForTableWithParams(updatedData.incomingMsg.message, node_incomingMsg_table.id, 'incoming-msg', 0, nodeArrJsonMsg_incoming);
-
-        //console.log("nodeArrMsg: ", nodeArrMsg);
-        createNodeWithParams('td', updatedData.incomingMsg.message.device_id, nodeArrJsonMsg_incoming[0].id, 1, 'device', 'message');
-        createNodeWithParams('td', updatedData.incomingMsg.message.temperature, nodeArrJsonMsg_incoming[1].id, 1, 'temperature', 'message');
-        createNodeWithParams('td', updatedData.incomingMsg.message.humidity, nodeArrJsonMsg_incoming[2].id, 1, 'humidity', 'message');
-
-        // perhaps I will need to get rid of the elements in this array
-    
-        console.log('Message added');
+            incomingMsg_message_content_row_column_value = document.createElement('div');
+            incomingMsg_message_content_row_column_value.id = `${incomingMsg_message_content_row_column_value_id}-${i}-column-value`;
+            incomingMsg_message_content_row_column_value.className = `${incomingMsg_message_content_row_column_value_id}-row-column-value`;
+            document.getElementById(incomingMsg_message_content_row.id).appendChild(incomingMsg_message_content_row_column_value);
+            document.getElementById(incomingMsg_message_content_row_column_value.id).textContent = updatedData.incomingMsg.message[keysArr[i]];
+            console.log('Message added');
+        }
     }
 
-    function createTableForDeviceSetup(updatedData) {
-        let node_outgoingMsg = document.createElement('td');
-        //node_outgoingMsg.id = 'msg-th';
+    function createTableForDeviceSetup(updatedData, keysArr) {
+        for(let i = 0; i < keysArr.length; i++) {
+        // Message
+        // creating the second column of the second row                                                        
+            outgoingMsg_message_content_row = document.createElement('div');
+            outgoingMsg_message_content_row.id = `${outgoingMsg_message_content_string}-${i}`;
+            outgoingMsg_message_content_row.className = outgoingMsg_message_content_row_class;
+            outgoingMsg_message_content.appendChild(outgoingMsg_message_content_row);
 
-        // creating inner table for the message property from backend json
-        let node_outgoingMsg_table = document.createElement('table');
-        node_outgoingMsg_table.id = 'outgoingMsg-inner-table';
+            outgoingMsg_message_content_row_column_key = document.createElement('div');
+            outgoingMsg_message_content_row_column_key.id = `outgoingMsg-message-content-row-${i}-column-key`;
+            outgoingMsg_message_content_row_column_key.className = `outgoingMsg-message-content-row-column-key`;
+            document.getElementById(outgoingMsg_message_content_row.id).appendChild(outgoingMsg_message_content_row_column_key);
+            document.getElementById(outgoingMsg_message_content_row_column_key.id).textContent = keysArr[i];
 
-        // appending the inner table to the second column second row dom object
-        node_outgoingMsg.appendChild(node_outgoingMsg_table);
-        node_outgoingMsg.id = 'outgoingMsg-message-col';
+            outgoingMsg_message_content_row_column_value = document.createElement('div');
+            outgoingMsg_message_content_row_column_value.id = `${outgoingMsg_message_content_row_column_value_id}-${i}-column-value`;
+            outgoingMsg_message_content_row_column_value.className = `${outgoingMsg_message_content_row_column_value_id}-row-column-value`;
+            document.getElementById(outgoingMsg_message_content_row.id).appendChild(outgoingMsg_message_content_row_column_value);
+            document.getElementById(outgoingMsg_message_content_row_column_value.id).textContent = updatedData.outgoingMsg.message[keysArr[i]];
+            console.log('Message added');
+        }
+    }
 
-        // appending the second row seconde column dom object to the existing row id
-        document.getElementById(nodeArrMsg_outgoing[1].id).appendChild(node_outgoingMsg);
+    function clearDiv(div) {
+        while(div.firstChild) {
+            div.removeChild(div.firstChild);
+        }
+    }
 
-        // creating new rows for the inner table -> new array needed here (nodeArrJsonMsg)
-        createRowsForTableWithParams(updatedData.outgoingMsg.message, node_outgoingMsg_table.id, 'outgoing-msg', 0, nodeArrJsonMsg_outgoing);
+    function createDivWithIdClassText(element, string, parent, text) {
+        //element = document.createElement('div');
+        element.id = string;
+        element.className = string;
+        parent.appendChild(element);
+        element.textContent = text;
+        //console.log(element);
+    }
 
+    function createHeaderRowAndTopicColumn(updatedData, flag) {
+        if (flag === 'incoming') {
+            // Create header row
+        createDivWithIdClassText(incomingMsg_topic_title, incomingMsg_topic_title_string, incomingMsg_topic, 'Topic');
+        createDivWithIdClassText(incomingMsg_message_title, incomingMsg_message_title_string, incomingMsg_message, 'Message')
         
-        //console.log("nodeArrMsg: ", nodeArrMsg);
-        createNodeWithParams('td', updatedData.outgoingMsg.message.device_ip, nodeArrJsonMsg_outgoing[0].id, 1, 'device_ip', 'message');
-        createNodeWithParams('td', updatedData.outgoingMsg.message.device_id, nodeArrJsonMsg_outgoing[1].id, 1, 'device_id', 'message');
+        // Create info rows
+        createDivWithIdClassText(incomingMsg_topic_content, incomingMsg_topic_content_string, incomingMsg_topic, updatedData.incomingMsg.topic)
+        createDivWithIdClassText(incomingMsg_message_content, incomingMsg_message_content_string, incomingMsg_message, '');
+        } else if (flag === 'outgoing') {
+            // Create header row
+        createDivWithIdClassText(outgoingMsg_topic_title, outgoingMsg_topic_title_string, outgoingMsg_topic, 'Topic');
+        createDivWithIdClassText(outgoingMsg_message_title, outgoingMsg_message_title_string, outgoingMsg_message, 'Message')
         
-
-        // perhaps I will need to get rid of the elements in this array
-    
-        console.log('Message added');
+        // Create info rows
+        createDivWithIdClassText(outgoingMsg_topic_content, outgoingMsg_topic_content_string, outgoingMsg_topic, updatedData.outgoingMsg.topic)
+        createDivWithIdClassText(outgoingMsg_message_content, outgoingMsg_message_content_string, outgoingMsg_message, '');
+        }
     }
 
     function fetchDataAndUpdate() {
@@ -206,8 +309,7 @@
             .then(updatedData => {
 
                 console.log(updatedData)
-                const db_icon = document.getElementById('svg-db');
-                const mqtt_icon = document.getElementById('svg-mqtt');
+                
 
                 createMouseoverAndMouseoutEventListener(db_icon, updatedData.service_status_db, 'Database')
                 createMouseoverAndMouseoutEventListener(mqtt_icon, updatedData.service_status_mqtt, 'Mosquitto')
@@ -223,260 +325,120 @@
                 } else {
                     mqtt_icon.style.fill = 'red';
                 }
-                    
+                 
+                mqtt_incoming_id = document.getElementById('mqtt-incoming-id');
                 //// INCOMING MESSAGES ////
                 if (Object.keys(updatedData.incomingMsg).length === 0) {
-                    var empty_body_string = 'empty-incoming-msg-body';
-                    const empty_body_div = document.getElementById(empty_body_string)
-                    if (empty_body_div== null) {
+                    clearDiv(mqtt_incoming_id);
+                    
+                    
+                    if (empty_body_div == null) {
                         console.log(`creating "${empty_body_string}"`);
                         let node = document.createElement('p');
                         let text_node = document.createTextNode('No messages yet');
                         node.appendChild(text_node);
                         node.id = empty_body_string;
                         node.className = empty_body_string;
-                        document.getElementById('mqtt-incoming-id').appendChild(node);
+                        mqtt_incoming_id.appendChild(node);
                     }
                     
                 } else {
-                    if (document.getElementById('empty-incoming-msg-body') != null) {
-                        document.getElementById('empty-incoming-msg-body').remove();
+                    console.log(`empty_body_div is: ${empty_body_div}`);
+                    if (document.getElementById(empty_body_string) != null) {
+                        document.getElementById(empty_body_string).remove();
                         console.log('removed "empty-incoming-msg-body"!');
                     }
                     
-                    if (document.getElementById('incomingMsg-topic') == null) {
+                    console.log(incomingMsg_topic);
+                    if (isSettingUpIncoming) {
 
                         // Creating divs for the json values from backend
-                        console.log('creating incomingMsg-topic');
+                        console.log('creating ', incomingMsg_topic_string);
+                        createDivWithIdClassText(incomingMsg_topic, incomingMsg_topic_string, mqtt_incoming_id, '');
 
-                        let node_topic = document.createElement('div');
-                        node_topic.id = 'incomingMsg-topic';
-                        node_topic.className = 'incomingMsg-topic';
-                        document.getElementById('mqtt-incoming-id').appendChild(node_topic);
-                        document.getElementById('incomingMsg-topic').textContent = '';
-
-                        console.log('creating incomingMsg-message');
-                        let node_message = document.createElement('div');
-                        node_message.id = 'incomingMsg-message';
-                        node_message.className = 'incomingMsg-message';
-                        document.getElementById('mqtt-incoming-id').appendChild(node_message);
-                        document.getElementById('incomingMsg-message').textContent = '';
+                        console.log('creating ', incomingMsg_message_string);
+                        createDivWithIdClassText(incomingMsg_message, incomingMsg_message_string, mqtt_incoming_id, '');
 
                         console.log('creating header columns');
-                        // Create header columns
-
-                        let node_topic_title = document.createElement('div');
-                        node_topic_title.id = 'incomingMsg-topic-title';
-                        node_topic_title.className = 'incomingMsg-topic-title';
-                        document.getElementById('incomingMsg-topic').appendChild(node_topic_title);
-                        document.getElementById('incomingMsg-topic-title').textContent = 'Topic';
-
-                        let node_topic_message = document.createElement('div');
-                        node_topic_message.id = 'incomingMsg-message-title';
-                        node_topic_message.className = 'incomingMsg-message-title';
-                        document.getElementById('incomingMsg-message').appendChild(node_topic_message);
-                        document.getElementById('incomingMsg-message-title').textContent = 'Message';
-
-                        // Populating nodeArrTopics with element id's and creating rows
-
-                        /*
-                        
-                        for (let i = 0; i < Object.getOwnPropertyNames(updatedData.incomingMsg).length; i++) {
-                            let node = document.createElement('div');
-                            node.id = `row-${i}-incomingMsg`;
-                            node.className = `row-${i}-incomingMsg`;
-                            nodeArrMsg_incoming.push(node);
-                            document.getElementById('incomingMsg-table').appendChild(nodeArrMsg_incoming[i]);
-                        }
-                        */
-                        /*
-                        console.log('creating header columns');
-                        // Create header columns
-                        createNodeWithParams('th', 'Topic', nodeArrMsg_incoming[0].id, 1, 'topic', 'topic');
-                        createNodeWithParams('th', 'Message', nodeArrMsg_incoming[0].id, 1, 'message', 'message');
-*/
-
-                        let node_topic_content = document.createElement('div');
-                        node_topic_content.id = 'incomingMsg-topic-content';
-                        node_topic_content.className = 'incomingMsg-topic-content';
-                        document.getElementById('incomingMsg-topic').appendChild(node_topic_content);
-                        document.getElementById('incomingMsg-topic-content').textContent = updatedData.incomingMsg.topic;
-
-                        let node_message_content = document.createElement('div');
-                        node_message_content.id = 'incomingMsg-message-content';
-                        node_message_content.className = 'incomingMsg-message-content';
-                        document.getElementById('incomingMsg-message').appendChild(node_message_content);
-                        //document.getElementById('incomingMsg-message-content').textContent = updatedData.incomingMsg.topic;
+                        createHeaderRowAndTopicColumn(updatedData, 'incoming');
 
                         const keysArr = Object.getOwnPropertyNames(updatedData.incomingMsg.message);
 
-                        console.log('keysArr.length == ', keysArr.length);
                         // Create row with info from json
 
                         if(updatedData.incomingMsg.topic === 'weather/data') {
-                            for(let i = 0; i < keysArr.length; i++) {
-                            // Message
-                            // creating the second column of the second row                                                        
-                                let node_message_content_row = document.createElement('div');
-                                node_message_content_row.id = `incomingMsg-message-content-${i}`;
-                                node_message_content_row.className = 'incomingMsg-message-content-row';
-                                document.getElementById('incomingMsg-message-content').appendChild(node_message_content_row);
-
-                                let node_message_content_row_column_key = document.createElement('div');
-                                node_message_content_row_column_key.id = `incomingMsg-message-content-row-${i}-column-key`;
-                                node_message_content_row_column_key.className = `incomingMsg-message-content-row-column-key`;
-                                document.getElementById(node_message_content_row.id).appendChild(node_message_content_row_column_key);
-                                document.getElementById(node_message_content_row_column_key.id).textContent = keysArr[i];
-
-                                let node_message_content_row_column_value = document.createElement('div');
-                                node_message_content_row_column_value.id = `incomingMsg-message-content-row-${i}-column-value`;
-                                node_message_content_row_column_value.className = `incomingMsg-message-content-row-column-value`;
-                                document.getElementById(node_message_content_row.id).appendChild(node_message_content_row_column_value);
-                                document.getElementById(node_message_content_row_column_value.id).textContent = updatedData.incomingMsg.message[keysArr[i]];
-
-
-                            
-                            //createMsgForWeatherData(updatedData)
-                                                      
-                            }
+                            // Creating the inner div layout for the message property of the json
+                            createMsgForWeatherData(updatedData, keysArr);                          
+                        
                         } else if (updatedData.incomingMsg.topic === 'device/client_ip') {
-                            let node_message_content_row = document.createElement('div');
-                            node_message_content_row.id = `incomingMsg-message-content-${0}`;
-                            node_message_content_row.className = 'incomingMsg-message-content-row';
-                            document.getElementById('incomingMsg-message-content').appendChild(node_message_content_row);
-                            document.getElementById(`incomingMsg-message-content-${0}`).textContent = updatedData.incomingMsg.message;
+                            incomingMsg_message_content_row = document.createElement('div');
+                            incomingMsg_message_content_row.id = `${incomingMsg_message_content_row_id}-${0}`;
+                            incomingMsg_message_content_row.className = incomingMsg_message_content_row_class;
+                            incomingMsg_message_content.appendChild(incomingMsg_message_content_row);
+                            incomingMsg_message_content_row.textContent = updatedData.incomingMsg.message;
                         }
                         
+                        isSettingUpIncoming = false;
                         
                     } else {
                         // Update the topic
-                        document.getElementById('incomingMsg-topic-content').textContent = updatedData.incomingMsg.topic;
-                        
+                        incomingMsg_topic_content.textContent = updatedData.incomingMsg.topic;
 
                         // Update the Message
-                        while(document.getElementById('incomingMsg-message-content').firstChild) {
-                            document.getElementById('incomingMsg-message-content').removeChild(document.getElementById('incomingMsg-message-content').firstChild);
-                        }
+                        clearDiv(incomingMsg_message_content);
                         
                         const keysArr = Object.getOwnPropertyNames(updatedData.incomingMsg.message);
 
-                        console.log('keysArr.length == ', keysArr.length);
                         // Create row with info from json
                         if(updatedData.incomingMsg.topic === 'weather/data') {
-                            for(let i = 0; i < keysArr.length; i++) {
-                                // Message
-                                // creating the second column of the second row                                                        
-                                let node_message_content_row = document.createElement('div');
-                                node_message_content_row.id = `incomingMsg-message-content-${i}`;
-                                node_message_content_row.className = 'incomingMsg-message-content-row';
-                                document.getElementById('incomingMsg-message-content').appendChild(node_message_content_row);
+                            // Update data in message column
+                            createMsgForWeatherData(updatedData, keysArr);
 
-                                let node_message_content_row_column_key = document.createElement('div');
-                                node_message_content_row_column_key.id = `incomingMsg-message-content-row-${i}-column-key`;
-                                node_message_content_row_column_key.className = `incomingMsg-message-content-row-column-key`;
-                                document.getElementById(node_message_content_row.id).appendChild(node_message_content_row_column_key);
-                                document.getElementById(node_message_content_row_column_key.id).textContent = keysArr[i];
-
-                                let node_message_content_row_column_value = document.createElement('div');
-                                node_message_content_row_column_value.id = `incomingMsg-message-content-row-${i}-column-value`;
-                                node_message_content_row_column_value.className = `incomingMsg-message-content-row-column-value`;
-                                document.getElementById(node_message_content_row.id).appendChild(node_message_content_row_column_value);
-                                document.getElementById(node_message_content_row_column_value.id).textContent = updatedData.incomingMsg.message[keysArr[i]];            
-                            }
                         } else if (updatedData.incomingMsg.topic === 'device/client_ip') {
-                            let node_message_content_row = document.createElement('div');
-                            node_message_content_row.id = `incomingMsg-message-content-${0}`;
-                            node_message_content_row.className = 'incomingMsg-message-content-row';
-                            document.getElementById('incomingMsg-message-content').appendChild(node_message_content_row);
-                            document.getElementById(`incomingMsg-message-content-${0}`).textContent = updatedData.incomingMsg.message;
+                            incomingMsg_message_content_row = document.createElement('div');
+                            incomingMsg_message_content_row.id = `${incomingMsg_message_content_row_id}-${0}`;
+                            incomingMsg_message_content_row.className = incomingMsg_message_content_row_class;
+                            incomingMsg_message_content.appendChild(incomingMsg_message_content_row);
+                            incomingMsg_message_content_row.textContent = updatedData.incomingMsg.message;
                         }
                             
-                        }
-                        
                     }
+                        
+                }
                 
-
+                mqtt_outgoing_id = document.getElementById(mqtt_outoging_id_string);
                 //// OUTGOING MESSAGES ////
                 console.log('outgoingMsg length = ', Object.keys(updatedData.outgoingMsg).length)
                 if (Object.keys(updatedData.outgoingMsg).length === 0) {
-                    
-                    var empty_body_string = 'empty-outgoing-msg-body';
-                    const empty_body_div = document.getElementById(empty_body_string)
-                    if (empty_body_div== null) {
-                        console.log(`creating "${empty_body_string}"`);
+                    clearDiv(mqtt_outgoing_id);
+                   
+
+                    if (empty_outgoing_body_div == null) {
+                        console.log(`creating "${empty_outgoing_body_string}"`);
                         let node = document.createElement('p');
                         let text_node = document.createTextNode('No messages yet');
                         node.appendChild(text_node);
-                        node.id = empty_body_string;
-                        node.className = empty_body_string;
-                        document.getElementById('mqtt-outgoing-id').appendChild(node);
+                        node.id = empty_outgoing_body_string;
+                        node.className = empty_outgoing_body_string;
+                        mqtt_outgoing_id.appendChild(node);
                     }
                 } else {
-                    if (document.getElementById('empty-outgoing-msg-body') != null) {
-                        document.getElementById('empty-outgoing-msg-body').remove();
+                    if (document.getElementById(empty_outgoing_body_string) != null) {
+                        document.getElementById(empty_outgoing_body_string).remove();
                         console.log('removed "empty-outgoing-msg-body"!');
                     }
 
-                    if (document.getElementById('outgoingMsg-topic') == null) {
+                    if (isSettingUpOutgoing) {
 
                         // Creating a table for the json values from backend
-                        console.log('creating outgoingMsg-topic');
+                        console.log('creating ', outgoingMsg_topic_string);
+                        createDivWithIdClassText(outgoingMsg_topic, outgoingMsg_topic_string, mqtt_outgoing_id, '');
 
-                        let node_topic = document.createElement('div');
-                        node_topic.id = 'outgoingMsg-topic';
-                        node_topic.className = 'outgoingMsg-topic';
-                        document.getElementById('mqtt-outgoing-id').appendChild(node_topic);
-                        document.getElementById('outgoingMsg-topic').textContent = '';
-
-                        console.log('creating outgoingMsg-message');
-
-                        let node_message = document.createElement('div');
-                        node_message.id = 'outgoingMsg-message';
-                        node_message.className = 'outgoingMsg-message';
-                        document.getElementById('mqtt-outgoing-id').appendChild(node_message);
-                        document.getElementById('outgoingMsg-message').textContent = '';
+                        console.log('creating ', outgoingMsg_message_string);
+                        createDivWithIdClassText(outgoingMsg_message, outgoingMsg_message_string, mqtt_outgoing_id, '');
 
                         console.log('creating header columns');
-                        // Create header columns
-
-                        let node_topic_title = document.createElement('div');
-                        node_topic_title.id = 'outgoingMsg-topic-title';
-                        node_topic_title.className = 'outgoingMsg-topic-title';
-                        document.getElementById('outgoingMsg-topic').appendChild(node_topic_title);
-                        document.getElementById('outgoingMsg-topic-title').textContent = 'Topic';
-
-                        let node_message_title = document.createElement('div');
-                        node_message_title.id = 'outgoingMsg-message-title';
-                        node_message_title.className = 'outgoingMsg-message-title';
-                        document.getElementById('outgoingMsg-message').appendChild(node_message_title);
-                        document.getElementById('outgoingMsg-message-title').textContent = 'Message';
-
-                        // Populating nodeArrTopics with element id's and creating rows
-
-                        /*
-                        for (let i = 0; i < Object.getOwnPropertyNames(updatedData.outgoingMsg).length; i++) {
-                            let node = document.createElement('tr');
-                            node.id = `row-${i}-outgoingMsg`;
-                            node.className = `row-${i}-outgoingMsg`;
-                            nodeArrMsg_outgoing.push(node);
-                            document.getElementById('outgoingMsg-table').appendChild(nodeArrMsg_outgoing[i]);
-                        }
-
-                        console.log('creating header columns');
-                        // Create header columns
-                        createNodeWithParams('th', 'Topic', nodeArrMsg_outgoing[0].id, 1, 'topic_outgoing', 'topic_outgoing');
-                        createNodeWithParams('th', 'Message', nodeArrMsg_outgoing[0].id, 1, 'message_outgoing', 'message_outgoing');
-*/
-                        let node_topic_content = document.createElement('div');
-                        node_topic_content.id = 'outgoingMsg-topic-content';
-                        node_topic_content.className = 'outgoingMsg-topic-content';
-                        document.getElementById('outgoingMsg-topic').appendChild(node_topic_content);
-                        document.getElementById('outgoingMsg-topic-content').textContent = updatedData.incomingMsg.topic;
-
-                        let node_message_content = document.createElement('div');
-                        node_message_content.id = 'outgoingMsg-message-content';
-                        node_message_content.className = 'outgoingMsg-message-content';
-                        document.getElementById('outgoingMsg-message').appendChild(node_message_content);
+                        createHeaderRowAndTopicColumn(updatedData, 'outgoing');
 
                         const keysArr = Object.getOwnPropertyNames(updatedData.outgoingMsg.message);
 
@@ -484,32 +446,9 @@
 
                         // Create row with info from json
                         if(updatedData.outgoingMsg.topic === 'device/setup')  {
-                            for(let i = 0; i < keysArr.length; i++) {
-                            // Message
-                            // creating the second column of the second row                                                        
-                                let node_message_content_row = document.createElement('div');
-                                node_message_content_row.id = `outgoingMsg-message-content-${i}`;
-                                node_message_content_row.className = 'outgoingMsg-message-content-row';
-                                document.getElementById('outgoingMsg-message-content').appendChild(node_message_content_row);
-
-                                let node_message_content_row_column_key = document.createElement('div');
-                                node_message_content_row_column_key.id = `outgoingMsg-message-content-row-${i}-column-key`;
-                                node_message_content_row_column_key.className = `outgoingMsg-message-content-row-column-key`;
-                                document.getElementById(node_message_content_row.id).appendChild(node_message_content_row_column_key);
-                                document.getElementById(node_message_content_row_column_key.id).textContent = keysArr[i];
-
-                                let node_message_content_row_column_value = document.createElement('div');
-                                node_message_content_row_column_value.id = `outgoingMsg-message-content-row-${i}-column-value`;
-                                node_message_content_row_column_value.className = `outgoingMsg-message-content-row-column-value`;
-                                document.getElementById(node_message_content_row.id).appendChild(node_message_content_row_column_value);
-                                document.getElementById(node_message_content_row_column_value.id).textContent = updatedData.incomingMsg.message[keysArr[i]];
-
-
                             
-                            //createMsgForWeatherData(updatedData)
-                                                      
-                            }
-                            //createTableForDeviceSetup(updatedData);
+                            createTableForDeviceSetup(updatedData, keysArr);
+                            isSettingUpOutgoing = false
                         }
                     } else {
                     // Update the topic
@@ -526,38 +465,13 @@
 
                         // Create row with info from json
                         if(updatedData.outgoingMsg.topic === 'device/setup')  {
-                            for(let i = 0; i < keysArr.length; i++) {
-                            // Message
-                            // creating the second column of the second row                                                        
-                                let node_message_content_row = document.createElement('div');
-                                node_message_content_row.id = `outgoingMsg-message-content-${i}`;
-                                node_message_content_row.className = 'outgoingMsg-message-content-row';
-                                document.getElementById('outgoingMsg-message-content').appendChild(node_message_content_row);
-
-                                let node_message_content_row_column_key = document.createElement('div');
-                                node_message_content_row_column_key.id = `outgoingMsg-message-content-row-${i}-column-key`;
-                                node_message_content_row_column_key.className = `outgoingMsg-message-content-row-column-key`;
-                                document.getElementById(node_message_content_row.id).appendChild(node_message_content_row_column_key);
-                                document.getElementById(node_message_content_row_column_key.id).textContent = keysArr[i];
-
-                                let node_message_content_row_column_value = document.createElement('div');
-                                node_message_content_row_column_value.id = `outgoingMsg-message-content-row-${i}-column-value`;
-                                node_message_content_row_column_value.className = `outgoingMsg-message-content-row-column-value`;
-                                document.getElementById(node_message_content_row.id).appendChild(node_message_content_row_column_value);
-                                document.getElementById(node_message_content_row_column_value.id).textContent = updatedData.outgoingMsg.message[keysArr[i]];
-
-
-                            
-                            //createMsgForWeatherData(updatedData)
-                                                    
-                            }
+                            createTableForDeviceSetup(updatedData, keysArr);
 
                         }
                 }
             }
-                //document.getElementById(/*one by one*/);
         })
-    } // 11:45
+    }
 
     function grabTopicsListFromDB() {
         fetch('/api/data_test/topics')
