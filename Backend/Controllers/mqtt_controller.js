@@ -18,7 +18,6 @@ const {
 /////////////////////////////////// VARIABLES ///////////////////////////////////
 const deviceIP = [];
 
-
 /////////////////////////////////// MQTT CLIENT ///////////////////////////////////
 
 const mqttClient = connectToMqttBroker();
@@ -64,9 +63,12 @@ mqttClient.on('error', (err) => {
 
 mqttClient.on('message', (topic, message) => {
     //console.log(`topic: ${topic}, message: ${message}`);
-    
+    var date = new Date();
+    //console.log(date);
+    message.time = date;
+    console.log(message.toString());
     const message_ = message.toString();
-    if (topic == 'device/client_ip') {
+    if (topic == 'device/client_ip') { // the ip is sent as a text value. It needs to be a json value
         console.log(message_);
         var json = {'topic': topic, 'message': message.toString()};
         

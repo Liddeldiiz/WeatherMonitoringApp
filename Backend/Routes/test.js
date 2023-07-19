@@ -18,7 +18,7 @@ const {
 router.get('/test', (req, res) => {
     var data = get_data_test();
     console.log(data);
-    res.render('Test', {data});
+    res.render('TestNoTable', {data});
 })
 
 router.get('/api/data_test/data', (req, res) => {

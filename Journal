@@ -1,0 +1,4 @@
+19.07.2023
+Had an issue with content-type Mime. I added a rule in my nodejs server to allow .css files. I checked the css file for invalid syntax and I checked the path. In the network tab I was seeing an error
+on reload of the page in the row where the .css file was being loaded. The error said: NS_ERROR_CORRUPTED_CONTENT. It appears that there was some issue with the file itself. I copied it's content into
+a new file and everything worked fine.

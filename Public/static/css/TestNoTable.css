@@ -1,0 +1,114 @@
+.first-row {
+    margin-top: -2vh;
+    padding: 0;
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    justify-content: flex-start;
+    
+    /*gap: 1vw;*/
+}
+
+.second-row {
+    padding-top: 5vh;
+    max-width: 100vw;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+/*//////////////////////////////////////////////////////// MQTT-BAR ////////////////////////////////////////////////////////*/
+
+.mqtt-bar {
+    margin-left: 5vw;
+    display: flex;
+    flex-direction: row;   
+}
+
+/*//////////////////////////////////////////////////////// MQTT-TOPICS ////////////////////////////////////////////////////////*/
+
+.mqtt-topics {
+    margin-left: 1vw;
+    border-style: solid;
+    border-color: black;
+}
+
+/*//////////////////////////////////////////////////////// MQTT-MESSAGES ////////////////////////////////////////////////////////*/
+
+.mqtt-messages {
+    display: flex;
+    flex-direction: column;
+    
+}
+.mqtt-incoming,
+.mqtt-outgoing,
+.empty-incoming-msg-body {
+    display: flex;
+    justify-content: center;
+    height: 34vh;
+    width: 22vw;
+    border-style: solid;
+    border-color: black;
+    border-top: none;
+    border-left: none;
+}
+
+.incomingMsg-topic,
+.outgoingMsg-topic  {
+    float: left;
+    width: 30%;
+    height: 100%;
+}
+
+.incomingMsg-message,
+.outgoingMsg-message {
+    float: left;
+    width: 70%;
+    height: 100%;
+}
+
+.incomingMsg-topic,
+.incomingMsg-message-content-row-column-key,
+.outgoingMsg-topic,
+.outgoingMsg-message-content-row-column-key {
+    border-right-style: solid;
+    border-right-color: black;
+}
+
+.incomingMsg-topic-title, .incomingMsg-message-title,
+.incomingMsg-message-content-row,
+.outgoingMsg-topic-title, .outgoingMsg-message-title,
+.outgoingMsg-message-content-row {
+    border-bottom-style: solid;
+    border-bottom-color: black;
+    text-align: center;
+}
+
+.incomingMsg-topic-content,
+.outgoingMsg-topic-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+}
+
+.incomingMsg-message-content-row,
+.outgoingMsg-message-content-row {
+    display: flex;
+}
+
+.incomingMsg-message-content-row-column-key,
+.incomingMsg-message-content-row-column-value,
+.outgoingMsg-message-content-row-column-key,
+.outgoingMsg-message-content-row-column-value   {
+    float: left;
+    width: 50%;
+    padding: 1rem;
+}
+
+.mqtt-bar, .device-bar {
+    border-style: solid;
+    border-color: black;
+    max-width: 40vw;
+    min-width: 40vw;
+}
