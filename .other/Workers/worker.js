@@ -1,9 +1,9 @@
 const { parentPort, workerData } = require('worker_threads');
-const mqtt_client = require('../Config/mqtt_config');
+const mqtt_client = require('../../Config/mqtt_config');
 const {
     subscribeToTopic,
     onMessage
-} = require('../Controllers/mqtt_controller');
+} = require('../../Controllers/mqtt_controller');
 
 var msg;
 var response = {}

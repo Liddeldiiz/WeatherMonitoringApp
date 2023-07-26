@@ -1,49 +1,33 @@
 /////////////////////////////////// IMPORTS ///////////////////////////////////
 const { runMQTTConfig, connectToMqttBroker } = require('../Config/mqtt_config');
-const { 
-    getFunction,
-    getDeviceByIP,
-    insertIntoDevices_Test,
-    handleMessage
+const mySqlController = require('../Controllers/mysql_controller');
+const serverStatus = require('../Models/server_status');
+const dataTest = require('../Models/test');
 
-} = require('../Controllers/mysql_controller');
-const { proxy1 } = require('../Data/dashboard');
-const { proxy_test } = require('../Data/test');
-
-const {
-    getSubscribeTopicsSQL,
-    getPublishTopicsSQL
-} = require('../Queries');
+const queryController = require('./query_controller');
 
 /////////////////////////////////// VARIABLES ///////////////////////////////////
 const deviceIP = [];
 
 /////////////////////////////////// MQTT CLIENT ///////////////////////////////////
-
 const mqttClient = connectToMqttBroker();
 
 
 /////////////////////////////////// EVENTS ///////////////////////////////////
 
 mqttClient.on('connect', (ack) => {
-    //console.log('initiating mqtt_client.on("connect") function...')
     if (!ack) {
         console.log(`MQTT Client not connected!`)
-        proxy1.service_status_mqtt = false;
-        proxy_test.service_status_mqtt = false;
-        //console.log(`proxy1:${proxy1.service_status_mqtt}`);
+        serverStatus.setStatusMQTT(false);
         delay(5000, () => {
             console.log('Trying to connect to mqtt broker...')
             runMQTTConfig();
         })
     } else {
         console.log(`MQTT Client connected!`)
-        proxy1.service_status_mqtt = true;
-        proxy_test.service_status_mqtt = true;
+        serverStatus.setStatusMQTT(true);
         getTopicsAndSubscribe();
-        //console.log(`proxy1:${proxy1.service_status_mqtt}`);
         return mqttClient;
-        //console.log(ack)
     }
 })
 
@@ -52,8 +36,8 @@ mqttClient.on('disconnect', () => {
 })
 
 mqttClient.on('error', (err) => {
-    //console.log('Error: mqttClient: ', err);
     if (err === 'ECONNREFUSED') {
+        serverStatus.setStatusMQTT(false);
         delay(5000, () => {
             console.log('Trying to reconnect...');
             runMQTTConfig();
@@ -62,9 +46,7 @@ mqttClient.on('error', (err) => {
 })
 
 mqttClient.on('message', (topic, message) => {
-    //console.log(`topic: ${topic}, message: ${message}`);
     var date = new Date();
-    //console.log(date);
     message.time = date;
     console.log(message.toString());
     const message_ = message.toString();
@@ -74,6 +56,7 @@ mqttClient.on('message', (topic, message) => {
         
         console.log(json.message);
         proxy_test.incomingMsg = json;
+        dataTest.setIncomingMsg(json);
         deviceIP.push(message_);
         console.log('deviceIP[0]: ', deviceIP[0]);
         console.log('checking device ip...');
@@ -85,22 +68,28 @@ mqttClient.on('message', (topic, message) => {
         var json = {'topic': topic, 'message': msg_json}
         // {topic: weather/data, message: {"device_id":"ESP8266Client-ca0f","temperature":28.60000038,"humidity":58.70000076}}
         proxy_test.incomingMsg = json;
+        dataTest.setIncomingMsg(json);
         console.log(json);
         handleMessage(topic, msg_json);
+        
     }
     return;
 })
 
 mqttClient.on('close', () => {
     console.log('mqtt connection closed');
-    proxy_test.service_status_mqtt = false;
+    serverStatus.setStatusMQTT(false);
 })
 
 /////////////////////////////////// FUNCTIONS ///////////////////////////////////
 
+exports.start = () => {
+    console.log('initiate mqtt client');
+}
+
 // Get the topics to subscribe/publish
 const getTopicsAndSubscribe = async() => {
-    const queryTopicsSubscribePromise = getFunction(getSubscribeTopicsSQL);
+    const queryTopicsSubscribePromise = mySqlController.getFunction(queryController.getSubscribeTopicsSQL);
     const queryTopicSubscribe = await queryTopicsSubscribePromise;
 
     try {
@@ -117,36 +106,23 @@ const getTopicsAndSubscribe = async() => {
 
 const checkDeviceIP = async () => {
 
-
-    //console.log(deviceIP[0]);
-    const topicPublishPromise = getFunction(getPublishTopicsSQL);
+    const topicPublishPromise = mySqlController.getFunction(queryController.getPublishTopicsSQL);
     const topicPublish = await topicPublishPromise;
     
-    const deviceIDPromise = getDeviceByIP(deviceIP[0]);
-    //console.log('awaiting device id');
+    const deviceIDPromise = mySqlController.getDeviceByIP(deviceIP[0]);
     const deviceIDResult = await deviceIDPromise;
-    //console.log(`publishing on topic: ${topicPublish[1].topics}`);
+
     if (deviceIDResult[0] === false) {
         const deviceID = await generateClientID(); // calling func to generate client id on server side if device has no entry in DB
-        //console.log(`Generated client ID: ${deviceID}`);
-        insertIntoDevices_Test([[deviceID, deviceIP[0]]]); // adding the device to the DB
+        mySqlController.insertIntoDevices_Test([[deviceID, deviceIP[0]]]); // adding the device to the DB
         const msgReject = `{ device_ip: ${deviceIP[0]}, device_id: ${deviceID} }`;
         const publishPromise = publishToTopic(mqttClient, topicPublish[1].topics, msgReject);
-        const response = await publishPromise;
-        //console.log(`Response: ${response}`);        
+        const response = await publishPromise;    
     } else {
-        //console.log('preparing msgResolve...')
         const msgResolve = `{ "device_ip": "${deviceIP[0]}", "device_id": "${deviceIDResult[0].clientID}" }`;
-        //console.log('msgResolve:')
-        //console.log(msgResolve);
-        
-        //console.log('publishingToTopic...')
         const publishPromise = publishToTopic(topicPublish[1].topics, msgResolve);
-        //console.log('awaiting response')
         const response = await publishPromise;
-        //console.log('poping from deviceIP');
         deviceIP.pop();
-        //console.log(`Response: ${JSON.stringify(response)}`);
     }    
 }
 
@@ -169,15 +145,18 @@ const publishToTopic = (topic, message) => {
             if (err) {
                 //console.log(`Failed to publish msg: ${message}\nTo topic: ${topic}`);
                 const response = { success: false, msg: `something went wrong with publishing on topic: ${topic}`, error: `error message: ${err.code}` };
-                proxy_test.outgoingMsg = response;
+                //proxy_test.outgoingMsg = response;
+                dataTest.outgoingMsg(response);
                 reject(response);
             } else {
                 //console.log('message published with retain flag set to true');
                 const response = { 'success': true, 'msg': `message published successfully on topic: ${topic}` };
                 const msg_json = JSON.parse(message);
                 const messagePublished = { 'topic': topic, 'message': msg_json };
-                proxy_test.popupNotification = response;
-                proxy_test.outgoingMsg = messagePublished;
+                //proxy_test.popupNotification = response;
+                dataTest.setPopupNotification(response);
+                //proxy_test.outgoingMsg = messagePublished;
+                dataTest.setOutgoingMsg(messagePublished);
                 resolve(response);
             }
         })
@@ -185,9 +164,16 @@ const publishToTopic = (topic, message) => {
     
 }
 
+const handleMessage = async (topic, msg) => {
+    
+    if (topic === 'weather/data') {
+        const DeviceIDPromise = mySqlController.getDeviceByClientID(msg.device_id);
+        const DeviceID = await DeviceIDPromise;
 
-/////////////////////////////////// EXPORTS ///////////////////////////////////
+        const values = [DeviceID[0].id, msg.temperature, msg.humidity];
 
-module.exports = {
-
+        const insertIntoWeather_DataPromise = mySqlController.insertIntoWeather_Data([values]);
+        const insertFinished = await insertIntoWeather_DataPromise;
+        
+    }
 }

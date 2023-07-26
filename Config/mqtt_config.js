@@ -1,5 +1,4 @@
 const mqtt = require('mqtt');
-const { proxy1 } = require('../Data/dashboard');
 const dotenv = require('dotenv');
 dotenv.config()
 
@@ -60,7 +59,7 @@ const runMQTTConfig = () => {
         //console.log('initiating mqtt_client.on("connect") function...')
         if (!ack) {
             console.log(`MQTT Client not connected!`)
-            proxy1.service_status_mqtt = false;
+            //proxy1.service_status_mqtt = false;
             //console.log(`proxy1:${proxy1.service_status_mqtt}`);
             delay(5000, () => {
                 console.log('Trying to connect to mqtt broker...')
@@ -68,7 +67,7 @@ const runMQTTConfig = () => {
             })
         } else {
             console.log(`MQTT Client connected!`)
-            proxy1.service_status_mqtt = true;
+            //proxy1.service_status_mqtt = true;
             //console.log(`proxy1:${proxy1.service_status_mqtt}`);
             return mqttClient;
             //console.log(ack)

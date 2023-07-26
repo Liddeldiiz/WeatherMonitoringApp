@@ -1,14 +1,35 @@
-const fs = require('fs');
-const express = require('express');
+const dataObj = require('../Models/dashboard');
+const mySqlController = require('../Controllers/mysql_controller');
+
+exports.getDashboard = (req, res) => {
+    var data = dataObj.getData();
+    res.render('Dashboard', {data});
+}
+
+exports.updateDashboard = (req, res) => {
+    var updatedData = getData();
+    res.json(updatedData);
+    //res.render('Dashboard', {data});
+}
+
+exports.getWeatherData = async (req, res) => {
+    values = [1, 6, 23]
+    
+    const resultPromise = mySqlController.getAllWeatherDataForSelectedDevices([values]);
+    const resultDone = await resultPromise;
+    //console.log(resultDone);
+    res.status(200).json(resultDone);
+    res.end();
+}
 
 let dashboardUpdateCallback;
 
-const setDashboardUpdateCallback = (callback) => {
+exports.setDashboardUpdateCallback = (callback) => {
     dashboardUpdateCallback = callback;
     //dashboardUpdateCallback = undefined;
 }
 
-const triggerDashboardUpdate = () => {
+exports.triggerDashboardUpdate = () => {
     if (dashboardUpdateCallback) {
         dashboardUpdateCallback();
     }
@@ -32,8 +53,10 @@ const createDisplayDashboardTrigger = () => {
 
 triggerDisplayDashboard = createDisplayDashboardTrigger();
 
+/*
 module.exports = {
     setDashboardUpdateCallback,
     triggerDisplayDashboard,
     triggerDashboardUpdate,
 }
+*/

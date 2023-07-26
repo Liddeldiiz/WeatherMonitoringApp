@@ -1,3 +1,9 @@
+function DeviceArray(deviceID) {
+    this.deviceID = deviceID
+    this.tempArray = [];
+    this.humArray = [];
+}
+
 var data = '<%= data %>';
 
 const nodeArrDevices_incoming = []; // used in devices
@@ -11,6 +17,31 @@ const nodeArrJsonMsg_outgoing = [];
 
 var isSettingUpIncoming = true;
 var isSettingUpOutgoing = true;
+var isSettingUpDefaultChart = true;
+
+
+const not_unique_device_ids = [];
+const deviceObjArr = [];
+
+const device1_temp = [];
+const device2_temp = [];
+const device3_temp = [];
+
+const device1_hum = [];
+const device2_hum = [];
+const device3_hum = [];
+
+const color_pallette = ['rgb(75, 192, 192)', 'rgb(255, 75, 25)', 'rgb(130, 130, 130)']
+
+const temperatureDataFromDB = [];
+
+const humDataFromDB = [
+    { label: 'Device 1', values: device1_hum, fill: false, borderColor: 'rgb(75, 192, 192)', tension: 0.1 },
+    { label: 'Device 2', values: device2_hum, fill: false, borderColor: 'rgb(255, 75, 25)', tension: 0.1 },
+    { label: 'Device 3', values: device3_hum, fill: false, borderColor: 'rgb(130, 130, 130)', tension: 0.1 }
+];
+
+
 
 const db_icon = document.getElementById('svg-db');
 const mqtt_icon = document.getElementById('svg-mqtt');
@@ -20,6 +51,12 @@ var mqtt_incoming_id = document.createElement('div');
 
 const mqtt_outoging_id_string = 'mqtt-outgoing-id';
 var mqtt_outgoing_id = document.createElement('div');
+
+const mqtt_topics_id_string = 'mqtt-topics-id';
+var mqtt_topics = document.createElement('div');
+
+const device_bar_id_string = 'device-bar-id';
+var device_bar = document.getElementById(device_bar_id_string);
 
 const empty_body_string = 'empty-incoming-msg-body';
 var empty_body_div;
@@ -86,6 +123,52 @@ var outgoingMsg_message_content_row_column_key;
 
 const outgoingMsg_message_content_row_column_value_id = outgoingMsg_message_content_string;
 var outgoingMsg_message_content_row_column_value;
+
+//// TOPICS ////
+const topics_header_string = 'topics-header-row';
+var topics_header = document.createElement('div');
+
+const topics_topic_string = 'topics-topic';
+var topics_topic = document.createElement('div');
+
+const topics_subscribe_string = 'topics-subscribe';
+var topics_subscribe = document.createElement('div');
+
+const topics_publish_string = 'topics-publish';
+var topics_publish = document.createElement('div');
+
+const topics_data_string = 'topics-data';
+var topics_data = document.createElement('div');
+
+const topics_data_topic_column_string = 'topics-data-topic-column';
+var topics_data_topic_column = document.createElement('div');
+
+const topics_data_subscribe_column_string = 'topics-data-subscribe-column';
+var topics_data_subscribe_column = document.createElement('div');
+
+const topics_data_publish_column_string = 'topics-data-publish-column';
+var topics_data_publish_column = document.createElement('div');
+
+//// DEVICES ////
+const devices_header_string = 'devices-header-row';
+var devices_header = document.createElement('div');
+
+const devices_clientID_string = 'devices-clientID';
+var devices_clientID = document.createElement('div');
+
+const devices_deviceID_string = 'devices-deviceID';
+var devices_deviceID = document.createElement('div');
+
+const devices_data_string = 'devices-data';
+var devices_data = document.createElement('div');
+
+const devices_data_clientID_string = 'devices-data-clientID-column';
+var devices_data_clientID = document.createElement('div');
+
+const devices_data_deviceID_string = 'devices-data-deviceID-column';
+var devices_data_deviceID = document.createElement('div');
+
+
 
 /////////////////////////////////// FUNCTIONS ///////////////////////////////////
 
@@ -212,6 +295,7 @@ function createTableForDeviceSetup(updatedData, keysArr) {
         outgoingMsg_message_content_row_column_value.className = `${outgoingMsg_message_content_row_column_value_id}-row-column-value`;
         document.getElementById(outgoingMsg_message_content_row.id).appendChild(outgoingMsg_message_content_row_column_value);
         document.getElementById(outgoingMsg_message_content_row_column_value.id).textContent = updatedData.outgoingMsg.message[keysArr[i]];
+        
         console.log('Message added');
     }
 }
@@ -231,6 +315,16 @@ function createDivWithIdClassText(element, string, parent, text) {
     parent.appendChild(element);
     element.textContent = text;
     //console.log(element);
+}
+
+function createDivWithIdClassTextNode(ID, CLASS, parent, text) {
+    let node = document.createElement('div');
+    node.id = ID;
+    node.className = CLASS;
+    let text_node = document.createElement('p');
+    text_node.textContent = text;
+    node.appendChild(text_node);
+    parent.appendChild(node);
 }
 
 // creates the header row and the first element of the second row on either 'mqtt-incoming' or 'mqtt-outgoing', which can be defined in the flag option as either 'incoming' or 'outgoing'
@@ -261,15 +355,15 @@ function fetchDataAndUpdate() {
         .then(updatedData => {
             console.log(updatedData)
             
-            createMouseoverAndMouseoutEventListener(db_icon, updatedData.service_status_db, 'Database')
-            createMouseoverAndMouseoutEventListener(mqtt_icon, updatedData.service_status_mqtt, 'Mosquitto')
-            if (updatedData.service_status_db) {
+            createMouseoverAndMouseoutEventListener(db_icon, updatedData.server_status.service_status_db, 'Database')
+            createMouseoverAndMouseoutEventListener(mqtt_icon, updatedData.server_status.service_status_mqtt, 'Mosquitto')
+            if (updatedData.server_status.service_status_db) {
                 db_icon.style.fill = 'green';
             } else {
                 db_icon.style.fill = 'grey';
             }
             
-            if (updatedData.service_status_mqtt) {
+            if (updatedData.server_status.service_status_mqtt) {
                 mqtt_icon.style.fill = 'green';
             } else {
                 mqtt_icon.style.fill = 'red';
@@ -277,18 +371,14 @@ function fetchDataAndUpdate() {
              
             mqtt_incoming_id = document.getElementById('mqtt-incoming-id');
             //// INCOMING MESSAGES ////
-            if (Object.keys(updatedData.incomingMsg).length === 0) {
+            if (Object.keys(updatedData.test.incomingMsg).length === 0) {
                 clearDiv(mqtt_incoming_id);
                 
                 
                 if (empty_body_div == null) {
                     console.log(`creating "${empty_body_string}"`);
-                    let node = document.createElement('p');
-                    let text_node = document.createTextNode('No messages yet');
-                    node.appendChild(text_node);
-                    node.id = empty_body_string;
-                    node.className = empty_body_string;
-                    mqtt_incoming_id.appendChild(node);
+
+                    createDivWithIdClassTextNode(empty_body_string, empty_body_string, mqtt_incoming_id, 'No messages yet');
                 }
                 
             } else {
@@ -308,61 +398,58 @@ function fetchDataAndUpdate() {
                     createDivWithIdClassText(incomingMsg_message, incomingMsg_message_string, mqtt_incoming_id, '');
 
                     console.log('creating header columns');
-                    createHeaderRowAndTopicColumn(updatedData, 'incoming');
+                    createHeaderRowAndTopicColumn(updatedData.test, 'incoming');
 
-                    const keysArr = Object.getOwnPropertyNames(updatedData.incomingMsg.message);
+                    const keysArr = Object.getOwnPropertyNames(updatedData.test.incomingMsg.message);
                     // Create row with info from json
-                    if(updatedData.incomingMsg.topic === 'weather/data') {
+                    if(updatedData.test.incomingMsg.topic === 'weather/data') {
                         // Creating the inner div layout for the message property of the json
                         createMsgForWeatherData(updatedData, keysArr);                          
                     
-                    } else if (updatedData.incomingMsg.topic === 'device/client_ip') {
+                    } else if (updatedData.test.incomingMsg.topic === 'device/client_ip') { // to be updated!
                         incomingMsg_message_content_row = document.createElement('div');
                         incomingMsg_message_content_row.id = `${incomingMsg_message_content_row_id}-${0}`;
                         incomingMsg_message_content_row.className = incomingMsg_message_content_row_class;
                         incomingMsg_message_content.appendChild(incomingMsg_message_content_row);
-                        incomingMsg_message_content_row.textContent = updatedData.incomingMsg.message;
+                        incomingMsg_message_content_row.textContent = updatedData.test.incomingMsg.message;
                     }
                     
                     isSettingUpIncoming = false;
                     
                 } else {
                     // Update the topic
-                    incomingMsg_topic_content.textContent = updatedData.incomingMsg.topic;
+                    incomingMsg_topic_content.textContent = updatedData.test.incomingMsg.topic;
                     // Update the Message
                     clearDiv(incomingMsg_message_content);
                     
-                    const keysArr = Object.getOwnPropertyNames(updatedData.incomingMsg.message);
+                    const keysArr = Object.getOwnPropertyNames(updatedData.test.incomingMsg.message);
                     // Create row with info from json
-                    if(updatedData.incomingMsg.topic === 'weather/data') {
+                    if(updatedData.test.incomingMsg.topic === 'weather/data') {
                         // Update data in message column
-                        createMsgForWeatherData(updatedData, keysArr);
-                    } else if (updatedData.incomingMsg.topic === 'device/client_ip') {
+                        createMsgForWeatherData(updatedData.test, keysArr);
+                    } else if (updatedData.test.incomingMsg.topic === 'device/client_ip') { // to be updated!
                         incomingMsg_message_content_row = document.createElement('div');
                         incomingMsg_message_content_row.id = `${incomingMsg_message_content_row_id}-${0}`;
                         incomingMsg_message_content_row.className = incomingMsg_message_content_row_class;
                         incomingMsg_message_content.appendChild(incomingMsg_message_content_row);
-                        incomingMsg_message_content_row.textContent = updatedData.incomingMsg.message;
+                        incomingMsg_message_content_row.textContent = updatedData.test.incomingMsg.message;
                     }
                         
                 }
                     
             }
             
-            mqtt_outgoing_id = document.getElementById(mqtt_outoging_id_string);
+            
+
             //// OUTGOING MESSAGES ////
-            console.log('outgoingMsg length = ', Object.keys(updatedData.outgoingMsg).length)
-            if (Object.keys(updatedData.outgoingMsg).length === 0) {
+
+            mqtt_outgoing_id = document.getElementById(mqtt_outoging_id_string);
+            if (Object.keys(updatedData.test.outgoingMsg).length === 0) {
                 clearDiv(mqtt_outgoing_id);
                
                 if (empty_outgoing_body_div == null) {
                     console.log(`creating "${empty_outgoing_body_string}"`);
-                    let node = document.createElement('p');
-                    let text_node = document.createTextNode('No messages yet');
-                    node.appendChild(text_node);
-                    node.id = empty_outgoing_body_string;
-                    node.className = empty_outgoing_body_string;
-                    mqtt_outgoing_id.appendChild(node);
+                    createDivWithIdClassTextNode(empty_outgoing_body_string, empty_outgoing_body_string, mqtt_outgoing_id, 'No messages yet');
                 }
             } else {
                 if (document.getElementById(empty_outgoing_body_string) != null) {
@@ -379,31 +466,32 @@ function fetchDataAndUpdate() {
 
                     console.log('creating header columns');
                     createHeaderRowAndTopicColumn(updatedData, 'outgoing');
-                    const keysArr = Object.getOwnPropertyNames(updatedData.outgoingMsg.message);
+                    const keysArr = Object.getOwnPropertyNames(updatedData.test.outgoingMsg.message);
 
                     //console.log('keysArr.length == ', keysArr.length);
                     // Create row with info from json
-                    if(updatedData.outgoingMsg.topic === 'device/setup')  {
+                    if(updatedData.test.outgoingMsg.topic === 'device/setup')  {
                         
-                        createTableForDeviceSetup(updatedData, keysArr);
+                        createTableForDeviceSetup(updatedData.test, keysArr);
                         isSettingUpOutgoing = false
                     }
                 } else {
                 // Update the topic
-                document.getElementById('outgoingMsg-topic-content').textContent = updatedData.outgoingMsg.topic;
+                document.getElementById('outgoingMsg-topic-content').textContent = updatedData.test.outgoingMsg.topic;
                 // Update the Message
                     while(document.getElementById('outgoingMsg-message-content').firstChild) {
                         document.getElementById('outgoingMsg-message-content').removeChild(document.getElementById('outgoingMsg-message-content').firstChild);
                     }
-                    const keysArr = Object.getOwnPropertyNames(updatedData.outgoingMsg.message);
+                    const keysArr = Object.getOwnPropertyNames(updatedData.test.outgoingMsg.message);
                     console.log('keysArr.length == ', keysArr.length);
                     // Create row with info from json
-                    if(updatedData.outgoingMsg.topic === 'device/setup')  {
-                        createTableForDeviceSetup(updatedData, keysArr);
+                    if(updatedData.test.outgoingMsg.topic === 'device/setup')  {
+                        createTableForDeviceSetup(updatedData.test, keysArr);
                     }
             }
         }
     })
+    
 }
 
 // fetches the topics list from the database
@@ -411,33 +499,37 @@ function grabTopicsListFromDB() {
     fetch('/api/data_test/topics')
         .then(response => response.json())
         .then(dataFromBackend => {
-            // Creating the rows for the table
-            createRowsForTableWithParams(dataFromBackend, 'topic-table', 'topic', 1, nodeArrTopics_incoming);
-            // Setting the Headers for the columns
-            createNodeWithParams('th', 'Topics', nodeArrTopics_incoming[0].id, 0);
-            createNodeWithParams('th', 'Subscribe', nodeArrTopics_incoming[0].id, 0);
-            createNodeWithParams('th', 'Publish', nodeArrTopics_incoming[0].id, 0);
-
-            // Populating the table
-            for(let i = 0; i < Object.getOwnPropertyNames(dataFromBackend).length; i++) {
-                // Adding the first property of the json element
-                createNodeWithParams('td', dataFromBackend[i].topic, nodeArrTopics_incoming[i+1].id, 0);
-                // Adding the second property of the json element
-                createNodeWithParams('td', dataFromBackend[i].subscribe, nodeArrTopics_incoming[i+1].id, 0);
-                // Adding the third property of the json element
-                createNodeWithParams('td', dataFromBackend[i].publish, nodeArrTopics_incoming[i+1].id, 0);
-            }0
-            
-        })
-}
-
-// not used
-function grabMqttMessages() {
-    fetch('/api/data_test/msg')
-        .then(response => response.json())
-        .then(dataFromBackend => {
             console.log(dataFromBackend);
-        })
+            // Creating the rows for the table
+            mqtt_topics = document.getElementById(mqtt_topics_id_string);
+            //console.log(mqtt_topics)
+
+            createDivWithIdClassText(topics_header, topics_header_string, mqtt_topics, '');
+
+            createDivWithIdClassText(topics_topic, topics_topic_string, topics_header, 'Topics');
+            createDivWithIdClassText(topics_subscribe, topics_subscribe_string, topics_header, 'Subscribe');
+            createDivWithIdClassText(topics_publish, topics_publish_string, topics_header, 'Publish');
+            //createRowsForTableWithParams(dataFromBackend, 'topic-table', 'topic', 1, nodeArrTopics_incoming);
+            // Setting the Headers for the columns
+            
+            createDivWithIdClassText(topics_data, topics_data_string, mqtt_topics, '');
+            createDivWithIdClassText(topics_data_topic_column, topics_data_topic_column_string, topics_data, '');
+
+            createDivWithIdClassText(topics_data_subscribe_column, topics_data_subscribe_column_string, topics_data, '');
+
+            createDivWithIdClassText(topics_data_publish_column, topics_data_publish_column_string, topics_data, '');
+
+            for (let i = 0; i < Object.getOwnPropertyNames(dataFromBackend).length; i++) {
+                // topics column
+                createDivWithIdClassTextNode(`topics-data-topic-column-row-${i}`, 'topics-data-topic-column-rows', topics_data_topic_column, dataFromBackend[i].topic);
+                
+                // subscribe column
+                createDivWithIdClassTextNode(`topics-data-subscribe-column-row-${i}`, 'topics-data-subscribe-column-rows', topics_data_subscribe_column, dataFromBackend[i].subscribe);
+                
+                // publish column
+                createDivWithIdClassTextNode(`topics-data-publish-column-row-${i}`, 'topics-data-publish-column-rows', topics_data_publish_column, dataFromBackend[i].publish);
+        }
+    })
 }
 
 // fetches the devices list from the database
@@ -445,37 +537,146 @@ function grabDeviceListFromDB() {
     fetch('/api/data_test/devices')
         .then(response => response.json())
         .then(dataFromBackend => {
-            //const nodeArr = [];
-            // If the device list is already displayed and new data needs to be added
-            if (document.getElementById('device-table').rows.length != 0) {
-                var table = document.getElementById('device-table');
-                //console.log(table.children.length);
-                var num_rows = table.rows.length - 1;
-                if (num_rows < Object.getOwnPropertyNames(dataFromBackend).length) {
-                    var diff = Object.getOwnPropertyNames(dataFromBackend).length - num_rows;
-                    
-                    createRowsForTableWithParams(Object.entries(dataFromBackend).slice(num_rows), 'device-table', 'device', 1, nodeArrDevices_incoming);
-                    let counter = nodeArrDevices_incoming.length - 1;
-                    for(let i = 0; i < diff; i++) {
-                        // Adding the first property of the received json
-                        createNodeWithParams('td', dataFromBackend[num_rows + i].client_id, nodeArrDevices_incoming[counter+i], 0);
-                        // Adding the second property of the received json
-                        createNodeWithParams('td', dataFromBackend[num_rows + i].device_id, nodeArrDevices_incoming[counter+i], 0);
+           // Create header row
+            createDivWithIdClassText(devices_header, devices_header_string, device_bar, '');
+            createDivWithIdClassText(devices_clientID, devices_clientID_string, devices_header, 'Client ID');
+            createDivWithIdClassText(devices_deviceID, devices_deviceID_string, devices_header, 'Device ID');
+
+
+            // Create Data rows
+            createDivWithIdClassText(devices_data, devices_data_string, device_bar, '');
+            createDivWithIdClassText(devices_data_clientID, devices_data_clientID_string, devices_data, '');
+            createDivWithIdClassText(devices_data_deviceID, devices_data_deviceID_string, devices_data, '');
+
+            for (let i = 0; i < Object.getOwnPropertyNames(dataFromBackend).length; i++) {
+                // client id column
+                createDivWithIdClassTextNode(`devices-data-clientID-column-row-${i}`, 'devices-data-clientID-column-rows', devices_data_clientID, dataFromBackend[i].client_id);
+                
+                // device id column
+                createDivWithIdClassTextNode(`devices-data-deviceID-column-row-${i}`, 'devices-data-deviceID-column-rows', devices_data_deviceID, dataFromBackend[i].device_id);  
+            } 
+        })
+}
+
+function grabDataForCharts() {
+    fetch('/api/data_test/chart_data', {
+        method: 'POST',
+        body: JSON.stringify({
+            title: 'Hello World',
+            body: 'My POST request',
+        }),
+        headers: {
+            'Content-type': 'application/json; charset=UTF-8',
+        },
+    })
+        .then(response => response.json())
+        .then(dataFromBackend => {
+            console.log(dataFromBackend);
+        })
+}
+
+function grabWeatherDataForCharts(temp_chart) {
+    if (isSettingUpDefaultChart) {
+        fetch('/api/data_test/chart_data/defaultSettings')
+            .then(response => response.json())
+            .then(dataFromBackend => {
+
+                const asArray = Object.entries(dataFromBackend.resultDone)
+                
+                //// Create variable names for the obj
+                dataFromBackend.deviceArray.forEach(deviceID => {
+                    //console.log(deviceID);
+                    const deviceObj = new DeviceArray(deviceID);
+                    deviceObjArr.push(deviceObj);
+                });
+
+                var counter = 0;                
+                //// Getting each device object one by one
+                deviceObjArr.forEach(device => {
+
+                    //// Filtering out data from the backend to get only data for specific device
+                    const device_data = asArray.filter(entry => entry[1].device_id === device.deviceID);
+
+                    /// pushing data in object format to prepared arrays for the charts
+                    device_data.forEach(data => {
+                        device.tempArray.push({x: data[1].date, y: data[1].temperature});
+                        device.humArray.push({x: data[1].date, y: data[1].humidity})
+                    });
+
+                    temperatureDataFromDB.push({
+                        label: `Device ${device.deviceID}`, 
+                        values: device.tempArray, 
+                        fill: false, 
+                        borderColor: color_pallette[counter], 
+                        tension: 0.1
+                    });
+
+                    counter += 1;
+                })
+
+                //const temp_chart = drawTemperatureChart();
+
+                console.log(temperatureDataFromDB);
+                const temperatureDatasets = temperatureDataFromDB.map((data) => {
+                    //console.log(data.values);
+                    return {
+                        label: data.label,
+                        data: data.values,
+                        fill: data.fill, 
+                        borderColor: data.borderColor, 
+                        tension: data.tension
                     }
-                }
-            } else {
-                // Creating dynamically the number of rows needed for the table depending on the json received
-                createRowsForTableWithParams(dataFromBackend, 'device-table', 'device', 1, nodeArrDevices_incoming);
-                // Setting the Headers for the columns
-                createNodeWithParams('th', 'Client ID', nodeArrDevices_incoming[0].id, 0);
-                createNodeWithParams('th', 'Device ID', nodeArrDevices_incoming[0].id, 0); 
-                                   
-                for(let i = 0; i < Object.getOwnPropertyNames(dataFromBackend).length; i++) {
-                    // Adding the first property of the received json
-                    createNodeWithParams('td', dataFromBackend[i].client_id, nodeArrDevices_incoming[i+1].id, 0);
-                    // Adding the second property of the received json
-                    createNodeWithParams('td', dataFromBackend[i].device_id, nodeArrDevices_incoming[i+1].id, 0);
+                })
+
+                const humDatasets = humDataFromDB.map((data) => {
+                    return {
+                        label: data.label,
+                        data: data.values,
+                        fill: data.fill, 
+                        borderColor: data.borderColor, 
+                        tension: data.tension
+                    }
+                })
+
+                //console.log(temp_chart.data.datasets);
+                //temp_chart.data.datasets = temperatureDatasets;
+                //hum_chart.data.datasets = humDatasets;
+
+                //temp_chart.update();
+                //hum_chart.update();
+                
+                isSettingUpDefaultChart = false;
+            })
+    }
+}
+
+function drawTemperatureChart() {
+    const temp_chart = new Chart(ctx_temp, {
+        type: 'line',
+        data: {
+            /*
+            labels: [   '01:00', '02:00', '03:00', '04:00', '05:00', '06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00',
+                        '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '24:00'],*/
+            datasets: []
+        },
+        options: {
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'hour',
+                        displayFormats: {
+                            hour: 'HH:mm'
+                        }
+                    },
+                    ticks: {
+                        source: 'datasets'
+                    }
+                },
+                y: {
                 }
             }
-        })
+        }
+    });
+    return temp_chart;
 }

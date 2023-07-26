@@ -15,7 +15,7 @@
     display: flex;
     flex-direction: row;
     /*justify-content: space-between;*/
-    gap: 5vw;
+    gap: 3vw;
 }
 
 /*//////////////////////////////////////////////////////// MQTT-BAR ////////////////////////////////////////////////////////*/
@@ -24,15 +24,9 @@
     margin-left: 5vw;
     display: flex;
     flex-direction: row;   
+    width: 44vw;
 }
 
-/*//////////////////////////////////////////////////////// MQTT-TOPICS ////////////////////////////////////////////////////////*/
-
-.mqtt-topics {
-    margin-left: 1vw;
-    border-style: solid;
-    border-color: black;
-}
 
 /*//////////////////////////////////////////////////////// MQTT-MESSAGES ////////////////////////////////////////////////////////*/
 
@@ -45,7 +39,7 @@
 .empty-incoming-msg-body, .empty-outgoing-msg-body {
     display: flex;
     justify-content: center;
-    height: 34vh;
+    height: 20vh;
     width: 22vw;
     border: none
 }
@@ -54,7 +48,7 @@
 .mqtt-outgoing {
     display: flex;
     justify-content: center;
-    height: 34vh;
+    height: 20vh;
     width: 22vw;
 }
 
@@ -126,6 +120,129 @@
 .mqtt-bar, .device-bar {
     border-style: solid;
     border-color: black;
-    max-width: 40vw;
-    min-width: 40vw;
+
+}
+
+.mqtt-topics {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.topics-header-row {
+    display: flex;
+    border-bottom-style: solid;
+    border-bottom-color: black;
+    height: 5%;
+    width: 100%;
+}
+
+.topics-topic, 
+.topics-subscribe, 
+.topics-publish {
+    width: 33%;
+    height: 100%;
+    float: left;
+    align-self: center;
+    padding-left: 1vw;
+}
+
+.topics-subscribe,
+.topics-data-subscribe-column {
+    border-style: solid;
+    border-color: black;
+    border-top: none;
+    border-bottom: none;
+}
+
+.topics-data {
+    display: flex;
+    height: 95%;
+    width: 100%;
+}
+
+.topics-data-topic-column,
+.topics-data-subscribe-column,
+.topics-data-publish-column {
+    width: 33%;
+    height: 100%;
+    float: left;
+}
+
+.topics-data-topic-column-rows,
+.topics-data-subscribe-column-rows,
+.topics-data-publish-column-rows {
+    border-bottom-style: solid;
+    border-bottom-color: black;
+    padding-right: 1vw; 
+    padding-left: 1vw;
+}
+
+.topics-data-topic-column-rows {
+    text-align: right;
+    
+}
+
+.device-bar {
+    width: 40vw;
+}
+
+.devices-header-row {
+    display: flex;
+    border-bottom-style: solid;
+    border-bottom-color: black;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+
+.devices-clientID,
+.devices-deviceID {
+    padding-left: 1vw;
+    padding-right: 1vw;
+    float: left;
+    width: 30%;
+    border-right-style: solid;
+    border-right-color: black;
+}
+
+.devices-data {
+    display: flex;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+
+.devices-data-clientID-column,
+.devices-data-deviceID-column {
+    float: left;
+    width: 35%;
+    border-right-style: solid;
+    border-right-color: black;
+}
+
+.devices-data-clientID-column-rows,
+.devices-data-deviceID-column-rows {
+    text-align: center;
+    border-bottom-style: solid;
+    border-bottom-color: black;
+    width: 100%;
+}
+
+
+.third-row {
+    float: right;
+    width: 80vw;
+    height: 100%;
+    margin-right: 5vw;
+}
+
+#chart-container {
+    width: 600px;
+    height: 400px;
+}
+
+.temperature-chart {
+    width: 80%;
+    height: 1vh;
 }

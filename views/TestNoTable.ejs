@@ -6,6 +6,13 @@
     <title>Test</title>
     <link href="../static/css/Global.css" rel="stylesheet" type="text/css">
     <link href="../static/css/TestNoTable.css" rel="stylesheet" type="text/css">
+    <!--<script src="https://cdn.jsdelivr.net/npm/chart.js/dist/Chart.min.js"></script>-->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@^0.1.0/dist/chartjs-adapter-moment.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+    
     <!--<link href="../static/css/TestOutgoing.css" rel="stylesheet" type="text/css">-->
     
 </head>
@@ -30,25 +37,35 @@
                     
                 </div>
             </div>
-            <div class="mqtt-topics">
+            <div class="mqtt-topics", id="mqtt-topics-id">
                 <table id="topic-table">
                     <%= %>
                 </table>
             </div>
         </div>
-        <div class="device-bar">
+        <div class="device-bar", id="device-bar-id">
             <table id="device-table">
                 <%= %>
             </table>
         </div>
     </div>
     <div class="third-row">
-        <p>Charts</p>
-        
+        <canvas id="temp_chart" class="temperature-chart">
+
+        </canvas>
+        <canvas id="hum_chart" width="400", height="100">
+
+        </canvas>
+        <div id="chart-containter">
+
+        </div>
+        <button onclick=grabWeatherDataForCharts()>grab data</button>
     </div>
     <!-- Get DB and MQTT Status from backend -->
+    
     <script src="../static/js/test_data.js" type="application/javascript"></script>
-    <script>
+    <script type="module">
+    
 
     
     /////////////////////////////////// CALLING FUNCTIONS ///////////////////////////////////
@@ -74,7 +91,384 @@
     
     grabDeviceListFromDB();
 
+    /////////////////////////////////// CHARTS ///////////////////////////////////
+/*
+    const ctx_temp = document.getElementById('temp_chart');
+    const ctx_hum = document.getElementById('hum_chart');
+
+    const temp_chart = new Chart(ctx_temp, {
+        type: 'line',
+        data: {
+            
+            labels: [   '01:00', '02:00', '03:00', '04:00', '05:00', '06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00',
+                        '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '24:00'],
+            datasets: []
+        },
+        options: {
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'hour',
+                        displayFormats: {
+                            hour: 'HH:mm'
+                        }
+                    },
+                    ticks: {
+                        source: 'data'
+                    }
+                },
+                y: {
+                }
+            }
+        }
+    });
+
+    const hum_chart = new Chart(ctx_hum, {
+        type: 'line',
+        data: {
+            datasets: []
+        },
+        options: {
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'hour',
+                        displayFormats: {
+                            hour: 'HH:mm'
+                        }
+                    },
+                    ticks: {
+                        source: 'data'
+                    }
+                },
+                y: {
+                }
+            }
+        }
+    })
+*/
+
+    //grabWeatherDataForCharts(temp_chart);
+
+    const dataD3 = [
+    { x: "2023-07-13T14:37:55.000Z", y: 27.7 },
+    { x: "2023-07-13T14:38:00.000Z", y: 27.7 },
+    { x: "2023-07-13T14:38:05.000Z", y: 27.7 },
+    { x: "2023-07-13T14:38:10.000Z", y: 27.7 },
+    { x: "2023-07-13T16:14:21.000Z", y: 25.7 },
+    { x: "2023-07-13T16:19:21.000Z", y: 25.6 },
+    { x: "2023-07-13T16:24:21.000Z", y: 25.6 },
+    { x: "2023-07-13T16:29:21.000Z", y: 25.7 },
+    { x: "2023-07-13T16:34:21.000Z", y: 25.6 },
+    { x: "2023-07-13T16:55:12.000Z", y: 25.5 },
+    ];
+
+    const width = 1200;
+    const height = 450;
+    const marginTop = 20;
+    const marginRight = 20;
+    const marginBottom = 20;
+    const marginLeft = 25;
+
+    const chartWidth = width-marginLeft-marginRight;
+
+    const parseTime = d3.utcParse('%Y-%m-%dT%H:%M:%S.%LZ');
+    const formatTime = d3.timeFormat('%H:%M');
+
+    const xData = d3.range(0, 24).map(d => new Date(0, 0, 0, d));
+
+    dataD3.forEach(d => {
+        d.x = parseTime(d.x);
+    })
+
+    // declare the x (horizontal position) scale
+    //const x = d3.scaleUtc().domain([new Date("2023-01-01"), new Date("2024-01-01")]).range([marginLeft, width - marginRight]);
+
+    //const x = d3.scaleLinear().domain(d3.extent(dataD3, d => parseTime(d.x))).range([0, chartWidth]);
+
+    const x = d3.scaleTime()
+        .domain([new Date(0, 0, 0, 0), new Date(0, 0, 0, 23, 59, 59)])
+        .range([marginLeft, width - marginRight]);
+
+    // declare the y scale
+    const y = d3.scaleLinear()
+        .domain([0, d3.max(dataD3, d => d.y)])
+        .range([height - marginBottom, marginTop]);
+
+    // create the SVG container
+    const svg = d3.create('svg')
+        .attr('width', width)
+        .attr('height', height);
+
+
+    // append the x-axis
+    //svg.append('g').attr('transform', `translate(0, ${height - marginTop})`).call(d3.axisBottom(x));
+
+    svg.append('g')
+        .attr('transform', `translate(0, ${height - marginTop})`)
+        .call(d3.axisBottom(x)
+            .tickValues(xData)
+            .tickFormat(formatTime));
+
+    // add the y-axis
+    svg.append('g')
+        .attr('transform', `translate(${marginLeft}, 0)`)
+        .call(d3.axisLeft(y));
+
+    const g = svg.append('g')
+        .attr('transform', `translate(${100}, ${100})`);
+    
+        // title
+    svg.append('text')
+        .attr('x', width/2)
+        .attr('y', 25)
+        .attr('text-anchor', 'middle')
+        .style('font-family', 'Helvetica')
+        .style('font-size', 20)
+        .text('Line Chart');
+
+        // x label
+    svg.append('text')
+        .attr('x', width/2)
+        .attr('y', height-25)
+        .attr('text-anchor', 'middle')
+        .style('font-family', 'Helvetica')
+        .style('font-size', 20)
+        .text('Time');
+
+        // y label
+    svg.append('text')
+        .attr('text-anchor', 'middle')
+        .attr('transform', `translate(${width/30}, ${height/2})rotate(-90)`)
+        .style('font-family', 'Helvetica')
+        .style('font-size', 20)
+        .text('Temperature');
+
+    svg.append('g')
+        .selectAll('dot')
+        .data(dataD3)
+        .enter()
+        .append('circle')
+        .style('fill', '#cc0000');
+    
+
+    const line = d3.line()
+        .x(d => x(formatTime(d.x)))
+        .y(d => y(d.y));
+
+    svg.append('path').datum(dataD3).attr('fill', 'none').attr('stroke', 'steelblue').attr('stroke-width', 2).attr('d', line);
+
+    // appendt the svg element
+    document.getElementById('chart-containter').append(svg.node());
+
+    /*
+console.log(d3.select('#chart-container'))
+
+    console.log(svg)
+
+    const xScale = d3.scaleLinear()
+        .domain([0, 23])
+        .range([0, width]);
+
+    const yScale = d3.scaleLinear()
+        .domain([0, d3.max(data, d => d.value)])
+        .range([height, 0]);
+
+    const line = d3.line()
+        .x(d => xScale(d.hour))
+        .y(d => yScale(d.value))
+
+    svg.append('path')
+        .datum(dataD3)
+        .attr('fill', 'none')
+        .attr('stroke', 'steelblue')
+        .attr('stroke-width', 2)
+        .attr('d', line);
+
+    svg.append('g')
+        .attr('transform', 'translate(0, $(height))')
+        .call(d3.axisBottom(xScale));
+
+    svg.append('g')
+        .call(d3.axisLeft(yScale));
+    //temp_chart.update();*/
     </script>
 
 </body>
 </html>
+
+<!--
+
+    Array(3) [ {…}, {…}, {…} ]
+​
+0: Object { label: "Device 1", fill: false, borderColor: "rgb(75, 192, 192)", … }
+​​
+borderColor: "rgb(75, 192, 192)"
+​​
+fill: false
+​​
+label: "Device 1"
+​​
+tension: 0.1
+​​
+values: Array(70) [ {…}, {…}, {…}, … ]
+​​​
+0: Object { x: "2023-07-13T14:37:55.000Z", y: 27.7 }
+​​​
+1: Object { x: "2023-07-13T14:38:00.000Z", y: 27.7 }
+​​​
+2: Object { x: "2023-07-13T14:38:05.000Z", y: 27.7 }
+​​​
+3: Object { x: "2023-07-13T14:38:10.000Z", y: 27.7 }
+​​​
+4: Object { x: "2023-07-13T16:14:21.000Z", y: 25.7 }
+​​​
+5: Object { x: "2023-07-13T16:19:21.000Z", y: 25.6 }
+​​​
+6: Object { x: "2023-07-13T16:24:21.000Z", y: 25.6 }
+​​​
+7: Object { x: "2023-07-13T16:29:21.000Z", y: 25.7 }
+​​​
+8: Object { x: "2023-07-13T16:34:21.000Z", y: 25.6 }
+​​​
+9: Object { x: "2023-07-13T16:55:12.000Z", y: 25.5 }
+​​​
+10: Object { x: "2023-07-13T17:00:12.000Z", y: 25.7 }
+​​​
+11: Object { x: "2023-07-13T17:05:12.000Z", y: 25.7 }
+​​​
+12: Object { x: "2023-07-13T17:10:12.000Z", y: 25.8 }
+​​​
+13: Object { x: "2023-07-13T17:15:12.000Z", y: 25.7 }
+​​​
+14: Object { x: "2023-07-13T17:20:12.000Z", y: 25.8 }
+​​​
+15: Object { x: "2023-07-13T17:25:12.000Z", y: 25.8 }
+​​​
+16: Object { x: "2023-07-13T17:30:12.000Z", y: 25.8 }
+​​​
+17: Object { x: "2023-07-13T17:35:12.000Z", y: 25.9 }
+​​​
+18: Object { x: "2023-07-13T17:40:13.000Z", y: 25.9 }
+​​​
+19: Object { x: "2023-07-13T17:45:12.000Z", y: 25.9 }
+​​​
+20: Object { x: "2023-07-13T17:50:12.000Z", y: 25.9 }
+​​​
+21: Object { x: "2023-07-13T17:55:12.000Z", y: 25.9 }
+​​​
+22: Object { x: "2023-07-13T18:00:12.000Z", y: 26 }
+​​​
+23: Object { x: "2023-07-13T18:05:12.000Z", y: 26 }
+​​​
+24: Object { x: "2023-07-13T18:10:12.000Z", y: 26 }
+​​​
+25: Object { x: "2023-07-13T18:15:12.000Z", y: 26 }
+​​​
+26: Object { x: "2023-07-13T18:20:12.000Z", y: 26 }
+​​​
+27: Object { x: "2023-07-13T18:25:12.000Z", y: 26 }
+​​​
+28: Object { x: "2023-07-13T18:30:12.000Z", y: 26 }
+​​​
+29: Object { x: "2023-07-13T18:35:12.000Z", y: 26 }
+​​​
+30: Object { x: "2023-07-13T18:40:12.000Z", y: 26 }
+​​​
+31: Object { x: "2023-07-13T18:45:12.000Z", y: 26 }
+​​​
+32: Object { x: "2023-07-13T18:50:12.000Z", y: 26 }
+​​​
+33: Object { x: "2023-07-13T18:55:12.000Z", y: 25.9 }
+​​​
+34: Object { x: "2023-07-13T19:00:12.000Z", y: 25.9 }
+​​​
+35: Object { x: "2023-07-13T19:05:12.000Z", y: 25.9 }
+​​​
+36: Object { x: "2023-07-13T19:10:12.000Z", y: 25.9 }
+​​​
+37: Object { x: "2023-07-13T19:15:12.000Z", y: 25.9 }
+​​​
+38: Object { x: "2023-07-13T19:20:12.000Z", y: 25.9 }
+​​​
+39: Object { x: "2023-07-13T19:25:12.000Z", y: 25.8 }
+​​​
+40: Object { x: "2023-07-13T19:30:12.000Z", y: 25.8 }
+​​​
+41: Object { x: "2023-07-13T19:35:12.000Z", y: 25.8 }
+​​​
+42: Object { x: "2023-07-13T19:40:12.000Z", y: 25.8 }
+​​​
+43: Object { x: "2023-07-13T19:45:12.000Z", y: 25.8 }
+​​​
+44: Object { x: "2023-07-13T19:50:12.000Z", y: 25.8 }
+​​​
+45: Object { x: "2023-07-13T19:55:12.000Z", y: 25.8 }
+​​​
+46: Object { x: "2023-07-13T20:00:12.000Z", y: 25.9 }
+​​​
+47: Object { x: "2023-07-13T20:05:12.000Z", y: 26 }
+​​​
+48: Object { x: "2023-07-13T20:10:12.000Z", y: 25.8 }
+​​​
+49: Object { x: "2023-07-13T20:15:12.000Z", y: 25.8 }
+​​​
+50: Object { x: "2023-07-13T20:20:12.000Z", y: 25.8 }
+​​​
+51: Object { x: "2023-07-13T20:25:12.000Z", y: 25.8 }
+​​​
+52: Object { x: "2023-07-13T20:30:12.000Z", y: 25.8 }
+​​​
+53: Object { x: "2023-07-13T20:35:12.000Z", y: 25.8 }
+​​​
+54: Object { x: "2023-07-13T20:40:12.000Z", y: 25.7 }
+​​​
+55: Object { x: "2023-07-13T20:45:12.000Z", y: 25.7 }
+​​​
+56: Object { x: "2023-07-13T20:50:12.000Z", y: 25.7 }
+​​​
+57: Object { x: "2023-07-13T20:55:12.000Z", y: 25.7 }
+​​​
+58: Object { x: "2023-07-13T21:00:12.000Z", y: 25.7 }
+​​​
+59: Object { x: "2023-07-13T21:05:12.000Z", y: 25.7 }
+​​​
+60: Object { x: "2023-07-13T21:10:12.000Z", y: 25.7 }
+​​​
+61: Object { x: "2023-07-13T21:15:12.000Z", y: 25.6 }
+​​​
+62: Object { x: "2023-07-13T21:20:12.000Z", y: 25.6 }
+​​​
+63: Object { x: "2023-07-13T21:25:12.000Z", y: 25.6 }
+​​​
+64: Object { x: "2023-07-13T21:30:12.000Z", y: 25.6 }
+​​​
+65: Object { x: "2023-07-13T21:35:12.000Z", y: 25.6 }
+​​​
+66: Object { x: "2023-07-13T21:40:12.000Z", y: 25.7 }
+​​​
+67: Object { x: "2023-07-13T21:45:12.000Z", y: 25.7 }
+​​​
+68: Object { x: "2023-07-13T21:50:12.000Z", y: 25.7 }
+​​​
+69: Object { x: "2023-07-13T21:55:12.000Z", y: 25.7 }
+​​​
+length: 70
+​​​
+<prototype>: Array []
+​​
+<prototype>: Object { … }
+​
+1: Object { label: "Device 6", fill: false, borderColor: "rgb(255, 75, 25)", … }
+​
+2: Object { label: "Device 23", fill: false, borderColor: "rgb(130, 130, 130)", … }
+​
+length: 3
+​
+<prototype>: Array []
+test_data.js:619:25
+
+
+-->

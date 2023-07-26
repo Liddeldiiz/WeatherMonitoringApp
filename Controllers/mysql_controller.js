@@ -1,18 +1,8 @@
 /////////////////////////////////// IMPORTS ///////////////////////////////////
 const { runDBConfig, connectToDB } = require('../Config/mysql_config');
-const { proxy1 } = require('../Data/dashboard');
-const { proxy_test } = require('../Data/test');
+const serverStatus = require('../Models/server_status');
 
-const {
-    getAllDevicesSQL,
-    getDeviceByIPSQL, 
-    getDeviceByClientIDSQL, 
-    getTempForSelectedDevicesSQL, 
-    insertNewDeviceSQL, 
-    insertNewWeahterDataSQL,
-    getAllWeatherDataForSelectedDevicesSQL,
-    getAllTopicsSQL,
-} = require('../Queries');
+const queryController = require('./query_controller');
 
 /////////////////////////////////// MYSQL CLIENT ///////////////////////////////////
 const mySQLClient = connectToDB();
@@ -23,20 +13,14 @@ const mySQLClient = connectToDB();
 mySQLClient.connect((err) => {
     if (err) {
         console.error('Error connecting to MySQL server: ', err);
-        proxy1.service_status_db = false;
-        proxy_test.service_status_db = false;
-        //triggerDisplayDashboard.service_status_db = false;
-        //setServiceStatusDB(false);
+        serverStatus.setStatusDB(false);
         delay(5000, () => {
             runDBConfig();
         })
         
     } else {
         console.log('MySQL Client connected')
-        proxy1.service_status_db = true;
-        proxy_test.service_status_db = true;
-        //triggerDisplayDashboard.service_status_db = true;
-        //setServiceStatusDB(true);
+        serverStatus.setStatusDB(true);
     }
     //console.log(`db_status: ${db_status}`);
     
@@ -45,6 +29,7 @@ mySQLClient.connect((err) => {
 mySQLClient.on('error', (err) => {
     if (err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'ECONNREFUSED') {
         console.error('MySQL connection lost. Reconnecting...');
+        serverStatus.setStatusDB(false);
         delay(5000, () => {
             runDBConfig();
         })
@@ -60,12 +45,12 @@ mySQLClient.on('error', (err) => {
 
 // GET //
 
-const getAllDevices = () => {
+exports.getAllDevices = () => {
     return new Promise((resolve, reject) => {
         var counter = 0;
         const query_result = {};
 
-        var query = mySQLClient.query(getAllDevicesSQL);
+        var query = mySQLClient.query(queryController.getAllDevicesSQL);
 
         query
             .on('error', function(err) {
@@ -91,18 +76,18 @@ const getAllDevices = () => {
 }
 
 // to be updated!
-const getDeviceByID = (mySQLClient, values) => {
+exports.getDeviceByID = (mySQLClient, values) => {
     var sql = "SELECT * FROM devices_test where id in ?;";
 
 }
 
-const getDeviceByIP = (device_ip) => {
+exports.getDeviceByIP = (device_ip) => {
     return new Promise((resolve, reject) => {
         
         console.log('getDeviceByIP: values: ', device_ip);
         var sqlParams = [device_ip]
         const query_result = [];
-        var query = mySQLClient.query(getDeviceByIPSQL, sqlParams);
+        var query = mySQLClient.query(queryController.getDeviceByIPSQL, sqlParams);
         query
             .on('error', function(err) {
                 if (err) reject(err);
@@ -122,13 +107,13 @@ const getDeviceByIP = (device_ip) => {
     })
 }
 
-const getDeviceByClientID = (ClientID) => {
+exports.getDeviceByClientID = (ClientID) => {
     return new Promise((resolve, reject) => {
         const query_result = [];
         
         var sql = "SELECT id FROM devices_test WHERE clientID = ?";
 
-        var query = mySQLClient.query(getDeviceByClientIDSQL, ClientID);
+        var query = mySQLClient.query(queryController.getDeviceByClientIDSQL, ClientID);
         query
             .on('error', function(err) {
                 if (err) reject(err);
@@ -147,10 +132,10 @@ const getDeviceByClientID = (ClientID) => {
 
 // INSERT //
 // to be updated!
-const insertIntoDevices_Test = (values) => {
+exports.insertIntoDevices_Test = (values) => {
     var sql = "INSERT INTO devices_test (clientID, clientIP) VALUES ?;"
 
-    var query = mySQLClient.query(insertNewDeviceSQL, [values]);
+    var query = mySQLClient.query(queryController.insertNewDeviceSQL, [values]);
     query
         .on('error', function(err) {
             if (err) console.log(err);
@@ -167,11 +152,11 @@ const insertIntoDevices_Test = (values) => {
 
 // GET //
 
-const getAllWeatherDataForSelectedDevices = (values) => {
+exports.getAllWeatherDataForSelectedDevices = (values) => {
     return new Promise((resolve, reject) => {
         var counter = 0;
         const query_result = {};
-        var query = mySQLClient.query(getAllWeatherDataForSelectedDevicesSQL, [values]);
+        var query = mySQLClient.query(queryController.getAllWeatherDataForSelectedDevicesSQL, [values]);
         query
             .on('error', function(err) {
                 if (err) reject(err);
@@ -193,11 +178,11 @@ const getAllWeatherDataForSelectedDevices = (values) => {
     })
 }
 
-const getTempForSelectedDevices = (values) => {
+exports.getTempForSelectedDevices = (values) => {
     return new Promise((resolve, reject) => {
         var counter = 0;
         const query_result = {};
-        var query = mySQLClient.query(getTempForSelectedDevicesSQL, [values]);
+        var query = mySQLClient.query(queryController.getTempForSelectedDevicesSQL, [values]);
         query
             .on('error', function(err) {
                 if (err) reject(err);
@@ -218,15 +203,43 @@ const getTempForSelectedDevices = (values) => {
     })
 }
 
+exports.getWeatherDataForTimeRangeAndSelectedDevice = (from, to, deviceArray) => {
+    return new Promise((resolve, reject) => {
+        var counter = 0;
+        const query_result = {};
+        var query = mySQLClient.query(queryController.getWheatherDataForTimeRangeSQL, [from, to, deviceArray]);
+
+        query
+            .on('error', function(err) {
+                if (err) reject(err);
+            })
+            .on('result', function(row) {
+                var resultObj = {
+                    "date": row.createDate,
+                    "device_id": row.device_id,
+                    "temperature": row.temperature,
+                    "humidity": row.humidity,
+                }
+                query_result[counter] = resultObj;
+                counter += 1;
+            })
+            .on('end', function() {
+                console.log('Query successful');
+                resolve(query_result);
+            })
+            
+    })
+}
+
 // INSERT //
 
-const insertIntoWeather_Data = async (values) => {
+exports.insertIntoWeather_Data = async (values) => {
     return new Promise((resolve, reject) => {
         //const finalValues = [[query_result[0], values[1], values[2]]];
     
         var sql2 = "INSERT INTO weather_data (device_id, temperature, humidity) VALUES ?"
     
-        var query2 = mySQLClient.query(insertNewWeahterDataSQL, [values]);
+        var query2 = mySQLClient.query(queryController.insertNewWeahterDataSQL, [values]);
         query2
             .on('error', function(err) {
                 if (err) reject(err);
@@ -243,12 +256,12 @@ const insertIntoWeather_Data = async (values) => {
 
 ////////////////// TOPICS //////////////////
 
-const getAllTopics = () => {
+exports.getAllTopics = () => {
     return new Promise((resolve, reject) => {
         var counter = 0;
         const query_result = {};
 
-        var query = mySQLClient.query(getAllTopicsSQL);
+        var query = mySQLClient.query(queryController.getAllTopicsSQL);
         query
             .on('error', function(err) {
                 if (err) reject(err);
@@ -275,21 +288,8 @@ const getAllTopics = () => {
 
 ////////////////// HELPER FUNCTIONS //////////////////
 
-const handleMessage = async (topic, msg) => {
-    
-    if (topic === 'weather/data') {
-        DeviceIDPromise = getDeviceByClientID(msg.device_id);
-        DeviceID = await DeviceIDPromise;
-
-        const values = [DeviceID[0].id, msg.temperature, msg.humidity];
-
-        const insertIntoWeather_DataPromise = insertIntoWeather_Data([values]);
-        insertFinished = await insertIntoWeather_DataPromise;
-        
-    }
-}
-
-const handleTempDataFromDB = async(values) => {
+// where to move this helper function?
+exports.handleTempDataFromDB = async(values) => {
     getTempPromise = await getTemp([values]);
     getTempDone = getTempPromise;
 
@@ -298,7 +298,7 @@ const handleTempDataFromDB = async(values) => {
 
 ////////////////// NOT USED FUNCTIONS //////////////////
 
-const getFunction = (sql) => {
+exports.getFunction = (sql) => {
     
     return new Promise((resolve, reject) => {
         const query_result = [];
@@ -317,20 +317,4 @@ const getFunction = (sql) => {
             })
     })
     
-}
-
-/////////////////////////////////// EXPORTS ///////////////////////////////////
-
-module.exports =  {
-    getDeviceByIP,
-    getFunction,
-    getTempForSelectedDevices,
-    insertIntoDevices_Test,
-    insertIntoWeather_Data,
-    getDeviceByClientID,
-    handleMessage,
-    handleTempDataFromDB,
-    getAllWeatherDataForSelectedDevices,
-    getAllDevices,
-    getAllTopics,
 }
